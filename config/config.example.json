@@ -1,0 +1,9 @@
+{
+    "GLOBAL": {
+        "BOT_NAME": "",
+        "API_HOST": "localhost",
+        "API_HTTP_PORT": 5700,
+        "API_WEBSOCKET_PORT": 6700,
+        "ACCESS_TOKEN": ""
+    }
+}

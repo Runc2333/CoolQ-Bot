@@ -1,0 +1,6 @@
+/config/config.json
+/node_modules
+*.log
+/plugins/guide.js
+sample.txt
+messages.db
