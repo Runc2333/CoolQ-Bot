@@ -1,0 +1,25 @@
+{
+  "name": "coolq-bot",
+  "version": "0.0.1",
+  "description": "A QQBot based on CoolQHttpApi",
+  "main": "app.js",
+  "dependencies": {
+    "cq-websocket": "^2.1.1",
+    "fs": "^0.0.1-security",
+    "sync-request": "^6.1.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Runc2333/CoolQ-Bot.git"
+  },
+  "author": "Runc2333",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Runc2333/CoolQ-Bot/issues"
+  },
+  "homepage": "https://github.com/Runc2333/CoolQ-Bot#readme"
+}
