@@ -34,15 +34,15 @@ function send(type, uid, msg) {
         var response = JSON.parse(res.getBody("utf8"));
     } catch (e) {
         console.log(res.getBody("utf8"));
-        log.write("消息发送失败: 无法解析服务器返回的数据.", "MESSAGE API", "WARNING");
-        log.write("消息发送失败: 请检查后端服务器是否工作正常.", "MESSAGE API", "WARNING");
+        log.write("无法解析服务器返回的数据.", "MESSAGE API] [消息发送失败", "WARNING");
+        log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [消息发送失败", "WARNING");
         return false;
     }
     if (response.retcode == 0) {
-        log.write(`消息已送达: 送往<${uid}>: <${msg}>.`, "MESSAGE API", "INFO");
+        log.write(`送往<${uid}>: <${msg}>.`, "MESSAGE API] [消息已送达", "INFO");
     } else {
         console.log(res.getBody("utf8"));
-        log.write(`消息发送失败: Ret:<${response.retcode}>`, "MESSAGE API", "WARNING");
+        log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [消息发送失败", "WARNING");
         return false;
     }
 }

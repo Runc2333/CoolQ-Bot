@@ -21,10 +21,24 @@ function handle(packet) {
             }
             break;
         case "private":
-
+            var registeredPlugins = config.get("GLOBAL", "PRIVATE_MESSAGE_REGISTRY");
+            for (key in registeredPlugins) {
+                var regex = eval(registeredPlugins[key].regex.replace(/\{BOT_NAME\}/g, BOT_NAME));//替换掉正则表达式字符串里的机器人名字 同时转化为正则表达式对象
+                if (regex.test(packet.message)) {
+                    log.write(`重定向到${key}处理`, "MessageHandler", "INFO");
+                    require(`${processPath}/plugins/${key}`)[registeredPlugins[key].handler](packet);//把请求转发给注册的插件处理
+                }
+            }
             break;
         case "discuss":
-
+            var registeredPlugins = config.get("GLOBAL", "DISCUSS_MESSAGE_REGISTRY");
+            for (key in registeredPlugins) {
+                var regex = eval(registeredPlugins[key].regex.replace(/\{BOT_NAME\}/g, BOT_NAME));//替换掉正则表达式字符串里的机器人名字 同时转化为正则表达式对象
+                if (regex.test(packet.message)) {
+                    log.write(`重定向到${key}处理`, "MessageHandler", "INFO");
+                    require(`${processPath}/plugins/${key}`)[registeredPlugins[key].handler](packet);//把请求转发给注册的插件处理
+                }
+            }
             break;
         default:
             log.write("遇到了未定义的事件.", "MessageHandler", "WARNING");

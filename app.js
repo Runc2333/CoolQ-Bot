@@ -11,6 +11,7 @@ const config = require(`${processPath}/utils/configApi.js`);//设置
 const messageHandler = require(`${processPath}/handler/messageHandler.js`);
 const noticeHandler = require(`${processPath}/handler/noticeHandler.js`);
 const requestHandler = require(`${processPath}/handler/requestHandler.js`);
+const superCommandHandler = require(`${processPath}/systemPlugin/superCommand.js`);
 
 /* 打印程序信息 */
 log.write("**********************************************", "MAIN THREAD", "INFO");
@@ -43,6 +44,11 @@ bot.on("ready", function () {
 
 //收到消息
 bot.on("message", function (_CQEvent, packet) {
+    if (/^\//.test(packet.message.replace(/\[CQ:.+?\]/ig, ""))) {
+        log.write("重定向到superCommand.js处理.", "MAIN THREAD", "INFO");
+        superCommandHandler.handle(packet);
+        return true;
+    }
     messageHandler.handle(packet);
 });
 
