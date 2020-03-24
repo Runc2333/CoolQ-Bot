@@ -45,13 +45,16 @@ function init() {
 }
 
 function greeting(packet) {
-    var GREETING_DISABLE_GROUPS = config.get("GREETING", "GREETING_DISABLE_GROUPS");
-    var index = GREETING_DISABLE_GROUPS.indexOf(packet.group_id.toString());
-    if (index === -1) {
-        var greeting = config.get("GREETING", "GREETING_STRING");
-        var msg = `${greeting[parseInt(Math.random() * greeting.length, 10)]}`;
-        message.prepare(packet, msg, true).send();
+    if (packet.message_type === "group") {
+        var GREETING_DISABLE_GROUPS = config.get("GREETING", "GREETING_DISABLE_GROUPS");
+        var index = GREETING_DISABLE_GROUPS.indexOf(packet.group_id.toString());
+        if (index === -1) {
+            return false;
+        }
     }
+    var greeting = config.get("GREETING", "GREETING_STRING");
+    var msg = `${greeting[parseInt(Math.random() * greeting.length, 10)]}`;
+    message.prepare(packet, msg, true).send();
 }
 
 function command(packet) {

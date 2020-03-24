@@ -45,22 +45,25 @@ function init() {
 }
 
 function hitokoto(packet) {
-    var HITOKOTO_DISABLE_GROUPS = config.get("HITOKOTO", "HITOKOTO_DISABLE_GROUPS");
-    var index = HITOKOTO_DISABLE_GROUPS.indexOf(packet.group_id.toString());
-    if (index === -1) {
-        var url = "https://v1.hitokoto.cn/";
-        var res = request("GET", url);
-        try {
-            var response = JSON.parse(res.getBody("utf8"));
-        } catch (e) {
-            console.log(res.getBody("utf8"));
-            log.write("无法解析服务器返回的数据.", "HITOKOTO", "WARNING");
-            log.write("请检查后端服务器是否工作正常.", "HITOKOTO", "WARNING");
+    if (packet.message_type === "group") {
+        var HITOKOTO_DISABLE_GROUPS = config.get("HITOKOTO", "HITOKOTO_DISABLE_GROUPS");
+        var index = HITOKOTO_DISABLE_GROUPS.indexOf(packet.group_id.toString());
+        if (index === -1) {
             return false;
         }
-        var msg = `${response.hitokoto} ————${response.from}`;
-        message.prepare(packet, msg, true).send();
     }
+    var url = "https://v1.hitokoto.cn/";
+    var res = request("GET", url);
+    try {
+        var response = JSON.parse(res.getBody("utf8"));
+    } catch (e) {
+        console.log(res.getBody("utf8"));
+        log.write("无法解析服务器返回的数据.", "HITOKOTO", "WARNING");
+        log.write("请检查后端服务器是否工作正常.", "HITOKOTO", "WARNING");
+        return false;
+    }
+    var msg = `${response.hitokoto} ——${response.from}`;
+    message.prepare(packet, msg, true).send();
 }
 
 function command(packet) {

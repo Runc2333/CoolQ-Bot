@@ -9,11 +9,12 @@ const superCommandHandler = require(`${processPath}/systemPlugin/superCommand.js
 
 /* 事件处理程序 */
 function handle(packet) {
-    console.log(packet);
+    // console.log(packet);
     //获取机器人名字
     var BOT_NAME = config.get("GLOBAL", "BOT_NAME");
     switch (packet.message_type) {
         case "group":
+            log.write(`<${packet.group_id}> - <${packet.sender.nickname}>: ${packet.message}.`, "收到群组消息", "INFO");
             if (/^\//.test(cqcode.decode(packet.message).pureText)) {
                 log.write("重定向到superCommand.js处理.", "MAIN THREAD", "INFO");
                 superCommandHandler.handle(packet);
@@ -29,6 +30,7 @@ function handle(packet) {
             }
             break;
         case "private":
+            log.write(`<${packet.sender.nickname}>: ${packet.message}.`, "收到私聊消息", "INFO");
             var registeredPlugins = config.get("GLOBAL", "PRIVATE_MESSAGE_REGISTRY");
             for (key in registeredPlugins) {
                 var regex = eval(registeredPlugins[key].regex.replace(/\{BOT_NAME\}/g, BOT_NAME));//替换掉正则表达式字符串里的机器人名字 同时转化为正则表达式对象
@@ -39,6 +41,7 @@ function handle(packet) {
             }
             break;
         case "discuss":
+            log.write(`<${packet.discuss_id}> - <${packet.sender.nickname}>: ${packet.message}.`, "收到讨论组消息", "INFO");
             var registeredPlugins = config.get("GLOBAL", "DISCUSS_MESSAGE_REGISTRY");
             for (key in registeredPlugins) {
                 var regex = eval(registeredPlugins[key].regex.replace(/\{BOT_NAME\}/g, BOT_NAME));//替换掉正则表达式字符串里的机器人名字 同时转化为正则表达式对象
