@@ -53,51 +53,51 @@ function write(section, data, field = null) {
 	}
 }
 
-function registerPlugin(details) {
-	if (typeof (details) !== "object") {
+function registerPlugin(arguments) {
+	if (typeof (arguments) !== "object") {
 		log.write("未能注册插件: 请提供一个对象作为参数.", "CONFIG API", "WARNING");
 		return false;
 	}
-	switch (details.type) {
+	switch (arguments.type) {
 		case "groupMessage":
 			var config = get("GLOBAL", "GROUP_MESSAGE_REGISTRY");
-			config[details.script] = {
-				"handler": details.handler,
-				"regex": details.regex,
-				"description": details.description
+			config[arguments.script] = {
+				"handler": arguments.handler,
+				"regex": arguments.regex,
+				"description": arguments.description
 			};
 			write("GLOBAL", config, "GROUP_MESSAGE_REGISTRY");
 			break;
 		case "privateMessage":
 			var config = get("GLOBAL", "PRIVATE_MESSAGE_REGISTRY");
-			config[details.script] = {
-				"handler": details.handler,
-				"regex": details.regex,
-				"description": details.description
+			config[arguments.script] = {
+				"handler": arguments.handler,
+				"regex": arguments.regex,
+				"description": arguments.description
 			};
 			write("GLOBAL", config, "PRIVATE_MESSAGE_REGISTRY");
 			break;
 		case "discussMessage":
 			var config = get("GLOBAL", "DISCUSS_MESSAGE_REGISTRY");
-			config[details.script] = {
-				"handler": details.handler,
-				"regex": details.regex,
-				"description": details.description
+			config[arguments.script] = {
+				"handler": arguments.handler,
+				"regex": arguments.regex,
+				"description": arguments.description
 			};
 			write("GLOBAL", config, "DISCUSS_MESSAGE_REGISTRY");
 			break;
 		case "notice":
 			var config = get("GLOBAL", "NOTICE_REGISTRY");
-			config[details.script] = {
-				"handler": details.handler,
-				"description": details.description
+			config[arguments.script] = {
+				"handler": arguments.handler,
+				"description": arguments.description
 			};
 			write("GLOBAL", config, "NOTICE_REGISTRY");
 		case "request":
 			var config = get("GLOBAL", "REQUEST_REGISTRY");
-			config[details.sscript] = {
-				"handler": details.shandler,
-				"description": details.description
+			config[arguments.sscript] = {
+				"handler": arguments.shandler,
+				"description": arguments.description
 			};
 			write("GLOBAL", config, "REQUEST_REGISTRY");
 			break;
@@ -106,19 +106,23 @@ function registerPlugin(details) {
 			return false;
 	}
 	var sections = { "groupMessage": "群组MESSAGE事件", "privateMessage": "私聊MESSAGE事件", "discussMessage": "讨论组MESSAGE事件", "notice": "NOTICE事件", "request": "REQUEST事件" };
-	log.write(`插件<${details.script}>已注册${sections[details.type]}.`, "CONFIG API", "INFO");
+	log.write(`插件<${arguments.script}>已注册${sections[arguments.type]}.`, "CONFIG API", "INFO");
 	return true;
 }
 
-function registerSuperCommand(command, script, handler, description = "", argument = "") {
-	var config = get("global", "SUPER_COMMAND_REGISTRY");
-	config[command] = {};
-	config[command]["script"] = script;
-	config[command]["handler"] = handler;
-	config[command]["argument"] = argument;
-	config[command]["description"] = description;
-	write("global", config, "SUPER_COMMAND_REGISTRY");
-	log.write(`插件<${script}>已注册命令</${command}>.`, "CONFIG API", "INFO");
+function registerSuperCommand(arguments) {
+	if (typeof (arguments) !== "object") {
+		log.write("未能注册命令: 请提供一个对象作为参数.", "CONFIG API", "WARNING");
+		return false;
+	}
+	var config = get("GLOBAL", "SUPER_COMMAND_REGISTRY");
+	config[arguments.command] = {};
+	config[arguments.command]["script"] = arguments.script;
+	config[arguments.command]["handler"] = arguments.handler;
+	config[arguments.command]["argument"] = typeof (arguments.argument) !== "undefined" ? arguments.argument : "";
+	config[arguments.command]["description"] = typeof (arguments.description) !== "undefined" ? arguments.description : "";
+	write("GLOBAL", config, "SUPER_COMMAND_REGISTRY");
+	log.write(`插件<${arguments.script}>已注册命令</${arguments.command}>.`, "CONFIG API", "INFO");
 }
 
 /* 清空配置文件注册区 */

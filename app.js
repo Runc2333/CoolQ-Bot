@@ -7,6 +7,8 @@ const request = require("sync-request");//同步网络请求
 const { CQWebSocket } = require("cq-websocket");//CoolQ-WebSocket
 const log = require(`${processPath}/utils/logger.js`);//日志
 const config = require(`${processPath}/utils/configApi.js`);//设置
+const message = require(`${processPath}/utils/messageApi.js`);//消息接口
+const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
 /* 事件处理程序 */
 const messageHandler = require(`${processPath}/handler/messageHandler.js`);
 const noticeHandler = require(`${processPath}/handler/noticeHandler.js`);
@@ -15,7 +17,7 @@ const superCommandHandler = require(`${processPath}/systemPlugin/superCommand.js
 
 /* 打印程序信息 */
 log.write("**********************************************", "MAIN THREAD", "INFO");
-log.write("*              CoolQ-Bot v1.0.0              *", "MAIN THREAD", "INFO");
+log.write("*              CoolQ-Bot v0.0.1              *", "MAIN THREAD", "INFO");
 log.write("*             Written In Node.js             *", "MAIN THREAD", "INFO");
 log.write("*              Build:2020.03.24              *", "MAIN THREAD", "INFO");
 log.write("*              Author: Runc2333              *", "MAIN THREAD", "INFO");
@@ -44,11 +46,6 @@ bot.on("ready", function () {
 
 //收到消息
 bot.on("message", function (_CQEvent, packet) {
-    if (/^\//.test(packet.message.replace(/\[CQ:.+?\]/ig, ""))) {
-        log.write("重定向到superCommand.js处理.", "MAIN THREAD", "INFO");
-        superCommandHandler.handle(packet);
-        return true;
-    }
     messageHandler.handle(packet);
 });
 

@@ -4,6 +4,7 @@ const processPath = process.cwd().replace(/\\/g, "/");//程序运行路径
 const request = require("sync-request");//同步网络请求
 const log = require(`${processPath}/utils/logger.js`);//日志
 const config = require(`${processPath}/utils/configApi.js`);//设置
+const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
 
 function send(type, uid, msg) {
     var data = {};
@@ -47,6 +48,32 @@ function send(type, uid, msg) {
     }
 }
 
+function prepare(packet, message, at = false) {
+    switch (packet.message_type) {
+        case "group":
+            if (at) {
+                message = `${cqcode.at(packet.sender.user_id)}\n${message}`;
+            }
+            var uid = packet.group_id;
+            break;
+        case "private":
+            var uid = packet.user_id;
+            break;
+        case "discuss":
+            var uid = packet.discuss_id;
+            break;
+        default:
+            log.write("处理失败:传入的参数类型不受支持.", "MESSAGE API", "WARNING");
+            return false;
+    }
+    return {
+        send: function() {
+            send(packet.message_type, uid, message);
+        }
+    }
+}
+
 module.exports = {
-    send
+    send,
+    prepare
 }

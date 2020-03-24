@@ -3,6 +3,9 @@ const processPath = process.cwd().replace(/\\/g, "/");//程序运行路径
 /* 模块 */
 const config = require(`${processPath}/utils/configApi.js`);//设置
 const log = require(`${processPath}/utils/logger.js`);//日志
+const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
+/* 事件处理程序 */
+const superCommandHandler = require(`${processPath}/systemPlugin/superCommand.js`);
 
 /* 事件处理程序 */
 function handle(packet) {
@@ -11,6 +14,11 @@ function handle(packet) {
     var BOT_NAME = config.get("GLOBAL", "BOT_NAME");
     switch (packet.message_type) {
         case "group":
+            if (/^\//.test(cqcode.decode(packet.message).pureText)) {
+                log.write("重定向到superCommand.js处理.", "MAIN THREAD", "INFO");
+                superCommandHandler.handle(packet);
+                return true;
+            }
             var registeredPlugins = config.get("GLOBAL", "GROUP_MESSAGE_REGISTRY");
             for (key in registeredPlugins) {
                 var regex = eval(registeredPlugins[key].regex.replace(/\{BOT_NAME\}/g, BOT_NAME));//替换掉正则表达式字符串里的机器人名字 同时转化为正则表达式对象
