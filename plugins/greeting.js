@@ -8,21 +8,8 @@ const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
 
 function init() {
     config.registerPlugin({
-        type: "groupMessage",
-        script: "greeting.js",
-        handler: "greeting",
-        regex: "/^{BOT_NAME}$/",
-        description: "赋予机器人打招呼的能力~"
-    });
-    config.registerPlugin({
-        type: "privateMessage",
-        script: "greeting.js",
-        handler: "greeting",
-        regex: "/^{BOT_NAME}$/",
-        description: "赋予机器人打招呼的能力~"
-    });
-    config.registerPlugin({
-        type: "discussMessage",
+        type: "message",
+        subType: "groupMessage, privateMessage, discussMessage",
         script: "greeting.js",
         handler: "greeting",
         regex: "/^{BOT_NAME}$/",

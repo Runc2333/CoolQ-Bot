@@ -59,32 +59,38 @@ function registerPlugin(arguments) {
 		return false;
 	}
 	switch (arguments.type) {
-		case "groupMessage":
-			var config = get("GLOBAL", "GROUP_MESSAGE_REGISTRY");
-			config[arguments.script] = {
-				"handler": arguments.handler,
-				"regex": arguments.regex,
-				"description": arguments.description
-			};
-			write("GLOBAL", config, "GROUP_MESSAGE_REGISTRY");
-			break;
-		case "privateMessage":
-			var config = get("GLOBAL", "PRIVATE_MESSAGE_REGISTRY");
-			config[arguments.script] = {
-				"handler": arguments.handler,
-				"regex": arguments.regex,
-				"description": arguments.description
-			};
-			write("GLOBAL", config, "PRIVATE_MESSAGE_REGISTRY");
-			break;
-		case "discussMessage":
-			var config = get("GLOBAL", "DISCUSS_MESSAGE_REGISTRY");
-			config[arguments.script] = {
-				"handler": arguments.handler,
-				"regex": arguments.regex,
-				"description": arguments.description
-			};
-			write("GLOBAL", config, "DISCUSS_MESSAGE_REGISTRY");
+		case "message"://消息事件
+			var config = get("GLOBAL", "MESSAGE_REGISTRY");
+			var subTypes = arguments.subType.split(/\s*,\s*/);
+			for (key in subTypes) {
+				switch (subTypes[key]) {
+					case "groupMessage"://群组消息
+						config["GROUP_MESSAGE"][arguments.script] = {
+							"handler": arguments.handler,
+							"regex": arguments.regex,
+							"description": arguments.description
+						};
+						break;
+					case "privateMessage"://私聊消息
+						config["PRIVATE_MESSAGE"][arguments.script] = {
+							"handler": arguments.handler,
+							"regex": arguments.regex,
+							"description": arguments.description
+						};
+						break;
+					case "discussMessage"://讨论组消息
+						config["DISCUSS_MESSAGE"][arguments.script] = {
+							"handler": arguments.handler,
+							"regex": arguments.regex,
+							"description": arguments.description
+						};
+						break;
+					default:
+						log.write("未能注册插件: 提供的注册模式不受支持.", "CONFIG API", "WARNING");
+						return false;
+				}
+			}
+			write("GLOBAL", config, "MESSAGE_REGISTRY");
 			break;
 		case "notice":
 			var config = get("GLOBAL", "NOTICE_REGISTRY");
@@ -105,7 +111,7 @@ function registerPlugin(arguments) {
 			log.write("未能注册插件: 提供的注册模式不受支持.", "CONFIG API", "WARNING");
 			return false;
 	}
-	var sections = { "groupMessage": "群组MESSAGE事件", "privateMessage": "私聊MESSAGE事件", "discussMessage": "讨论组MESSAGE事件", "notice": "NOTICE事件", "request": "REQUEST事件" };
+	var sections = { "message": "MESSAGE事件", "notice": "NOTICE事件", "request": "REQUEST事件" };
 	log.write(`插件<${arguments.script}>已注册${sections[arguments.type]}.`, "CONFIG API", "INFO");
 	return true;
 }
@@ -125,10 +131,8 @@ function registerSuperCommand(arguments) {
 	log.write(`插件<${arguments.script}>已注册命令</${arguments.command}>.`, "CONFIG API", "INFO");
 }
 
-/* 清空配置文件注册区 */
-write("GLOBAL", {}, "GROUP_MESSAGE_REGISTRY");
-write("GLOBAL", {}, "PRIVATE_MESSAGE_REGISTRY");
-write("GLOBAL", {}, "DISCUSS_MESSAGE_REGISTRY");
+/* 初始化配置文件注册区 */
+write("GLOBAL", { GROUP_MESSAGE: {}, PRIVATE_MESSAGE: {}, DISCUSS_MESSAGE: {} }, "MESSAGE_REGISTRY");
 write("GLOBAL", {}, "NOTICE_REGISTRY");
 write("GLOBAL", {}, "REQUEST_REGISTRY");
 write("GLOBAL", {}, "SUPER_COMMAND_REGISTRY");

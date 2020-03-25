@@ -9,21 +9,8 @@ const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
 
 function init() {
     config.registerPlugin({
-        type: "groupMessage",
-        script: "hitokoto.js",
-        handler: "hitokoto",
-        regex: "/(^一言|一言$|hitokoto)/",
-        description: "获取一句话~"
-    });
-    config.registerPlugin({
-        type: "privateMessage",
-        script: "hitokoto.js",
-        handler: "hitokoto",
-        regex: "/(^一言|一言$|hitokoto)/",
-        description: "获取一句话~"
-    });
-    config.registerPlugin({
-        type: "discussMessage",
+        type: "message",
+        subType: "groupMessage, privateMessage, discussMessage",
         script: "hitokoto.js",
         handler: "hitokoto",
         regex: "/(^一言|一言$|hitokoto)/",
