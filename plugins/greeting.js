@@ -20,7 +20,7 @@ function init() {
         script: "greeting.js",
         handler: "command",
         argument: "[action]",
-        description: "[action]:\nenable|disable - 启用或禁用Greeting插件.#admin\nadd|remove [string] - 添加或删除一句问候语.#admin\ndisplay - 显示当前注册到插件的问候语."
+        description: "Greeting插件入口, 以下是参数说明:\n[action]:\nenable|disable - 启用或禁用Greeting插件.#admin\nadd|remove [string] - 添加或删除一句问候语.#admin\ndisplay - 显示当前注册到插件的问候语."
     });
     if (config.get("GREETING") === false) {
         var data = {};

@@ -19,15 +19,15 @@ function handle(packet) {
                 superCommandHandler.handle(packet);
                 return true;//中断处理
             }
-            var messageType = GROUP_MESSAGE;
+            var messageType = "GROUP_MESSAGE";
             break;
         case "private":
             log.write(`<${packet.sender.nickname}>: ${packet.message}.`, "收到私聊消息", "INFO");
-            var messageType = PRIVATE_MESSAGE;
+            var messageType = "PRIVATE_MESSAGE";
             break;
         case "discuss":
             log.write(`<${packet.discuss_id}> - <${packet.sender.nickname}>: ${packet.message}.`, "收到讨论组消息", "INFO");
-            var messageType = DISCUSS_MESSAGE;
+            var messageType = "DISCUSS_MESSAGE";
             break;
         default:
             log.write("遇到了未定义的事件.", "MessageHandler", "WARNING");

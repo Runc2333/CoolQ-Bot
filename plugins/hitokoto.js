@@ -21,7 +21,7 @@ function init() {
         script: "hitokoto.js",
         handler: "command",
         argument: "[action]",
-        description: "[action]:\nenable|disable - 启用或禁用Hitokoto.#admin\n"
+        description: "一言插件入口, 以下是参数说明:\n[action]:\nenable|disable - 启用或禁用Hitokoto.#admin\n"
     });
     if (config.get("HITOKOTO") === false) {
         var data = {};
