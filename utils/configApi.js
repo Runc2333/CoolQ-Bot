@@ -67,22 +67,19 @@ function registerPlugin(arguments) {
 					case "groupMessage"://群组消息
 						config["GROUP_MESSAGE"][arguments.script] = {
 							"handler": arguments.handler,
-							"regex": arguments.regex,
-							"description": arguments.description
+							"regex": arguments.regex
 						};
 						break;
 					case "privateMessage"://私聊消息
 						config["PRIVATE_MESSAGE"][arguments.script] = {
 							"handler": arguments.handler,
-							"regex": arguments.regex,
-							"description": arguments.description
+							"regex": arguments.regex
 						};
 						break;
 					case "discussMessage"://讨论组消息
 						config["DISCUSS_MESSAGE"][arguments.script] = {
 							"handler": arguments.handler,
-							"regex": arguments.regex,
-							"description": arguments.description
+							"regex": arguments.regex
 						};
 						break;
 					default:
@@ -99,38 +96,32 @@ function registerPlugin(arguments) {
 				switch (subTypes[key]) {
 					case "groupUpload":
 						config["GROUP_UPLOAD"][arguments.script] = {
-							"handler": arguments.handler,
-							"description": arguments.description
+							"handler": arguments.handler
 						};
 						break;
 					case "groupAdmin":
 						config["GROUP_ADMIN"][arguments.script] = {
-							"handler": arguments.handler,
-							"description": arguments.description
+							"handler": arguments.handler
 						};
 						break;
 					case "groupIncrease":
 						config["GROUP_INCREASE"][arguments.script] = {
-							"handler": arguments.handler,
-							"description": arguments.description
+							"handler": arguments.handler
 						};
 						break;
 					case "groupDecrease":
 						config["GROUP_DECREASE"][arguments.script] = {
-							"handler": arguments.handler,
-							"description": arguments.description
+							"handler": arguments.handler
 						};
 						break;
 					case "groupBan":
 						config["GROUP_BAN"][arguments.script] = {
-							"handler": arguments.handler,
-							"description": arguments.description
+							"handler": arguments.handler
 						};
 						break;
 					case "friendAdd":
 						config["FRIEND_ADD"][arguments.script] = {
-							"handler": arguments.handler,
-							"description": arguments.description
+							"handler": arguments.handler
 						};
 						break;
 					default:
@@ -145,15 +136,13 @@ function registerPlugin(arguments) {
 			for (key in subTypes) {
 				switch (subTypes[key]) {
 					case "friend":
-						config["FRIEND"][arguments.sscript] = {
-							"handler": arguments.handler,
-							"description": arguments.description
+						config["FRIEND"][arguments.script] = {
+							"handler": arguments.handler
 						};
 						break;
 					case "group":
-						config["GROUP"][arguments.sscript] = {
-							"handler": arguments.handler,
-							"description": arguments.description
+						config["GROUP"][arguments.script] = {
+							"handler": arguments.handler
 						};
 						break;
 					default:
@@ -166,6 +155,11 @@ function registerPlugin(arguments) {
 		default:
 			log.write("未能注册插件: 提供的注册模式不受支持.", "CONFIG API", "WARNING");
 			return false;
+	}
+	var config = get("GLOBAL", "PLUGIN_REGISTRY");
+	if (typeof (config[arguments.script]) === "undefined") {
+		config[arguments.script] = typeof (arguments.description) !== "undefined" ? arguments.description : "该插件开发者未填写描述.";
+		write("GLOBAL", config, "PLUGIN_REGISTRY");
 	}
 	var sections = { "message": "MESSAGE事件", "notice": "NOTICE事件", "request": "REQUEST事件" };
 	log.write(`插件<${arguments.script}>已注册${sections[arguments.type]}.`, "CONFIG API", "INFO");
@@ -184,10 +178,16 @@ function registerSuperCommand(arguments) {
 	config[arguments.command]["argument"] = typeof (arguments.argument) !== "undefined" ? arguments.argument : "";
 	config[arguments.command]["description"] = typeof (arguments.description) !== "undefined" ? arguments.description : "";
 	write("GLOBAL", config, "SUPER_COMMAND_REGISTRY");
+	var config = get("GLOBAL", "PLUGIN_REGISTRY");
+	if (typeof (config[arguments.script]) === "undefined") {
+		config[arguments.script] = "该插件开发者未填写描述.";
+		write("GLOBAL", config, "PLUGIN_REGISTRY");
+	}
 	log.write(`插件<${arguments.script}>已注册命令</${arguments.command}>.`, "CONFIG API", "INFO");
 }
 
 /* 初始化配置文件注册区 */
+write("GLOBAL", {}, "PLUGIN_REGISTRY");
 write("GLOBAL", { GROUP_MESSAGE: {}, PRIVATE_MESSAGE: {}, DISCUSS_MESSAGE: {} }, "MESSAGE_REGISTRY");
 write("GLOBAL", { GROUP_UPLOAD: {}, GROUP_ADMIN: {}, GROUP_INCREASE: {}, GROUP_DECREASE: {}, GROUP_BAN: {}, FRIEND_ADD: {} }, "NOTICE_REGISTRY");
 write("GLOBAL", { FRIEND: {}, GROUP: {} }, "REQUEST_REGISTRY");

@@ -14,6 +14,13 @@ function init() {
         argument: "",
         description: "显示指令帮助."
     });
+    config.registerSuperCommand({
+        command: "plugins",
+        script: "help.js",
+        handler: "displayPluginInfo",
+        argument: "",
+        description: "显示注册到系统的插件."
+    });
 }
 
 function displayHelpInfo(packet) {
@@ -37,7 +44,19 @@ function displayHelpInfo(packet) {
     message.prepare(packet, msg, true).send();
 }
 
+function displayPluginInfo(packet) {
+    var msg = "以下是目前注册到系统的所有插件:";
+    var globalPlaceholder = new Array((msg.length) * 2 + 2).join("-");
+    msg += `\n${globalPlaceholder}\n`;
+    var registeredPlugins = config.get("GLOBAL", "PLUGIN_REGISTRY");
+    for (key in registeredPlugins) {
+        msg += `${key}: ${registeredPlugins[key]}\n`;
+    }
+    message.prepare(packet, msg, true).send();
+}
+
 module.exports = {
     init,
-    displayHelpInfo
+    displayHelpInfo,
+    displayPluginInfo
 }
