@@ -13,7 +13,7 @@ function init() {
         subType: "groupMessage, discussMessage",
         script: "chatbot.js",
         handler: "chatbot",
-        regex: "/(^{BOT_NAME}|\\[CQ:at,qq={BOT_QQNUM}\\])/",
+        regex: "/(^{BOT_NAME}.+?|\\[CQ:at,qq={BOT_QQNUM}\\].+?)/",
         description: "让机器人来陪你聊聊天~"
     });
     config.registerSuperCommand({
