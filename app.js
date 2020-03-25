@@ -17,9 +17,9 @@ const superCommandHandler = require(`${processPath}/systemPlugin/superCommand.js
 
 /* 打印程序信息 */
 log.write("**********************************************", "MAIN THREAD", "INFO");
-log.write("*              CoolQ-Bot v0.0.1              *", "MAIN THREAD", "INFO");
+log.write("*              CoolQ-Bot v0.0.2              *", "MAIN THREAD", "INFO");
 log.write("*             Written In Node.js             *", "MAIN THREAD", "INFO");
-log.write("*              Build:2020.03.24              *", "MAIN THREAD", "INFO");
+log.write("*              Build:2020.03.25              *", "MAIN THREAD", "INFO");
 log.write("*              Author: Runc2333              *", "MAIN THREAD", "INFO");
 log.write("**********************************************", "MAIN THREAD", "INFO");
 
