@@ -94,17 +94,73 @@ function registerPlugin(arguments) {
 			break;
 		case "notice":
 			var config = get("GLOBAL", "NOTICE_REGISTRY");
-			config[arguments.script] = {
-				"handler": arguments.handler,
-				"description": arguments.description
-			};
+			var subTypes = arguments.subType.split(/\s*,\s*/);
+			for (key in subTypes) {
+				switch (subTypes[key]) {
+					case "groupUpload":
+						config["GROUP_UPLOAD"][arguments.script] = {
+							"handler": arguments.handler,
+							"description": arguments.description
+						};
+						break;
+					case "groupAdmin":
+						config["GROUP_ADMIN"][arguments.script] = {
+							"handler": arguments.handler,
+							"description": arguments.description
+						};
+						break;
+					case "groupIncrease":
+						config["GROUP_INCREASE"][arguments.script] = {
+							"handler": arguments.handler,
+							"description": arguments.description
+						};
+						break;
+					case "groupDecrease":
+						config["GROUP_DECREASE"][arguments.script] = {
+							"handler": arguments.handler,
+							"description": arguments.description
+						};
+						break;
+					case "groupBan":
+						config["GROUP_BAN"][arguments.script] = {
+							"handler": arguments.handler,
+							"description": arguments.description
+						};
+						break;
+					case "friendAdd":
+						config["FRIEND_ADD"][arguments.script] = {
+							"handler": arguments.handler,
+							"description": arguments.description
+						};
+						break;
+					default:
+						log.write("未能注册插件: 提供的注册模式不受支持.", "CONFIG API", "WARNING");
+						return false;
+				}
+			}
 			write("GLOBAL", config, "NOTICE_REGISTRY");
 		case "request":
 			var config = get("GLOBAL", "REQUEST_REGISTRY");
-			config[arguments.sscript] = {
-				"handler": arguments.shandler,
-				"description": arguments.description
-			};
+			var subTypes = arguments.subType.split(/\s*,\s*/);
+			for (key in subTypes) {
+				switch (subTypes[key]) {
+					case "friend":
+						config["FRIEND"][arguments.sscript] = {
+							"handler": arguments.handler,
+							"description": arguments.description
+						};
+						break;
+					case "group":
+						config["GROUP"][arguments.sscript] = {
+							"handler": arguments.handler,
+							"description": arguments.description
+						};
+						break;
+					default:
+						log.write("未能注册插件: 提供的注册模式不受支持.", "CONFIG API", "WARNING");
+						return false;
+				}
+			}
 			write("GLOBAL", config, "REQUEST_REGISTRY");
 			break;
 		default:
@@ -133,8 +189,8 @@ function registerSuperCommand(arguments) {
 
 /* 初始化配置文件注册区 */
 write("GLOBAL", { GROUP_MESSAGE: {}, PRIVATE_MESSAGE: {}, DISCUSS_MESSAGE: {} }, "MESSAGE_REGISTRY");
-write("GLOBAL", {}, "NOTICE_REGISTRY");
-write("GLOBAL", {}, "REQUEST_REGISTRY");
+write("GLOBAL", { GROUP_UPLOAD: {}, GROUP_ADMIN: {}, GROUP_INCREASE: {}, GROUP_DECREASE: {}, GROUP_BAN: {}, FRIEND_ADD: {} }, "NOTICE_REGISTRY");
+write("GLOBAL", { FRIEND: {}, GROUP: {} }, "REQUEST_REGISTRY");
 write("GLOBAL", {}, "SUPER_COMMAND_REGISTRY");
 
 module.exports = {

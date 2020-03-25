@@ -6,10 +6,10 @@ function handle(packet) {
         case "group_admin"://管理员
 
             break;
-        case "group_decrease"://退群
+        case "group_increase"://进群
 
             break;
-        case "group_increase"://进群
+        case "group_decrease"://退群
 
             break;
         case "group_ban"://禁言
