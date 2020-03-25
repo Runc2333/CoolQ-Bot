@@ -48,7 +48,7 @@ function greeting(packet) {
     if (packet.message_type === "group") {
         var GREETING_DISABLE_GROUPS = config.get("GREETING", "GREETING_DISABLE_GROUPS");
         var index = GREETING_DISABLE_GROUPS.indexOf(packet.group_id.toString());
-        if (index === -1) {
+        if (index !== -1) {
             return false;
         }
     }

@@ -48,7 +48,7 @@ function hitokoto(packet) {
     if (packet.message_type === "group") {
         var HITOKOTO_DISABLE_GROUPS = config.get("HITOKOTO", "HITOKOTO_DISABLE_GROUPS");
         var index = HITOKOTO_DISABLE_GROUPS.indexOf(packet.group_id.toString());
-        if (index === -1) {
+        if (index !== -1) {
             return false;
         }
     }

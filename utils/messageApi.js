@@ -54,12 +54,15 @@ function prepare(packet, message, at = false) {
             if (at) {
                 message = `${cqcode.at(packet.sender.user_id)}\n${message}`;
             }
+            var type = "group";
             var uid = packet.group_id;
             break;
         case "private":
+            var type = "private";
             var uid = packet.user_id;
             break;
         case "discuss":
+            var type = "discuss";
             var uid = packet.discuss_id;
             break;
         default:
@@ -68,7 +71,7 @@ function prepare(packet, message, at = false) {
     }
     return {
         send: function() {
-            send(packet.message_type, uid, message);
+            send(type, uid, message);
         }
     }
 }
