@@ -10,10 +10,10 @@ const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
 function init() {
     config.registerPlugin({
         type: "message",
-        subType: "groupMessage, privateMessage, discussMessage",
+        subType: "groupMessage, discussMessage",
         script: "chatbot.js",
         handler: "chatbot",
-        regex: "/^{BOT_NAME}.+/",
+        regex: "/(^{BOT_NAME}|\\[CQ:at,qq={BOT_QQNUM}\\])/",
         description: "让机器人来陪你聊聊天~"
     });
     config.registerSuperCommand({
@@ -21,11 +21,11 @@ function init() {
         script: "chatbot.js",
         handler: "command",
         argument: "[action]",
-        description: "聊天机器人插件入口, 以下是参数说明:\n[action]:\nenable|disable - 启用或禁用聊天机器人.#admin"
+        description: "聊天机器人插件入口, 以下是参数说明:\n[action]:\nenable|disable - 启用或禁用聊天机器人.#admin\nsetapikey [apikey] - 设置插件使用的API KEY."
     });
     if (config.get("CHATBOT") === false) {
         var data = {};
-        data["TIANXING_API_KEY"] = "Please replace this with your TianXin API Key.";
+        data["API_KEY"] = {};
         data["DISABLE_GROUPS"] = [];
         config.write("CHATBOT", data);
         log.write("未在配置文件内找到插件配置, 已自动生成默认配置.", "CHATBOT", "INFO");
@@ -33,7 +33,32 @@ function init() {
 }
 
 function chatbot(packet) {
-    
+    if (packet.message_type === "group") {
+        var DISABLE_GROUPS = config.get("CHATBOT", "DISABLE_GROUPS");
+        var index = DISABLE_GROUPS.indexOf(packet.group_id.toString());
+        if (index !== -1) {
+            return false;
+        }
+    }
+    var apikey = config.get("CHATBOT", "API_KEY")[packet.group_id];
+    if (apikey === undefined) {
+        apikey = "xiaosi"
+    }
+    var regex = eval(`/(^${config.get("GLOBAL", "BOT_NAME")}|\\[CQ:at,qq=${config.get("GLOBAL", "BOT_QQNUM")}\\])/`);
+    var spoken = packet.message.replace(regex, "");
+    var url = encodeURI(`https://api.ownthink.com/bot?appid=${apikey}&spoken=${spoken}&userid=${packet.sender.user_id}`);
+    console.log(url);
+    var res = request("GET", url);
+    try {
+        var response = JSON.parse(res.getBody("utf8"));
+    } catch (e) {
+        console.log(res.getBody("utf8"));
+        log.write("无法解析服务器返回的数据.", "HITOKOTO", "WARNING");
+        log.write("请检查后端服务器是否工作正常.", "HITOKOTO", "WARNING");
+        return false;
+    }
+    var msg = `${response.data.info.text.replace("小思", "老人机")}`;
+    message.prepare(packet, msg, true).send();
 }
 
 function command(packet) {
@@ -77,6 +102,27 @@ function command(packet) {
                 //处于禁用状态
                 var msg = "[ChatBot] 已经是禁用状态了, 无需重复禁用.";
             }
+            message.prepare(packet, msg, true).send();
+            break;
+        case "setapikey":
+            /* 检查权限 */
+            if (packet.sender.role !== "admin" && packet.sender.role !== "owner") {
+                var msg = "[ChatBot] 权限不足.";
+                message.prepare(packet, msg, true).send();
+                return false;
+            }
+            /* 检查必须参数 */
+            if (typeof (options[2]) === "undefined") {
+                var msg = "[ChatBot] 请提供要设置的API KEY.";
+                message.prepare(packet, msg, true).send();
+                return false;
+            }
+            message.revoke(packet.message_id);
+            var apikeyConfig = config.get("CHATBOT", "API_KEY");
+            var APIKey = options[2];
+            apikeyConfig[packet.group_id] = APIKey;
+            config.write("CHATBOT", apikeyConfig, "API_KEY");
+            var msg = "[ChatBot] 已设定API KEY.";
             message.prepare(packet, msg, true).send();
             break;
         default:

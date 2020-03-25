@@ -10,6 +10,7 @@ const superCommandHandler = require(`${processPath}/systemPlugin/superCommand.js
 function handle(packet) {
     //获取机器人名字
     var BOT_NAME = config.get("GLOBAL", "BOT_NAME");
+    var BOT_QQNUM = config.get("GLOBAL", "BOT_QQNUM");
     switch (packet.message_type) {
         case "group":
             log.write(`<${packet.group_id}> - <${packet.sender.nickname}>: ${packet.message}.`, "收到群组消息", "INFO");
@@ -37,7 +38,8 @@ function handle(packet) {
     /* 交给注册的插件处理 */
     var registeredPlugins = config.get("GLOBAL", "MESSAGE_REGISTRY")[messageType];
     for (key in registeredPlugins) {
-        var regex = eval(registeredPlugins[key].regex.replace(/\{BOT_NAME\}/g, BOT_NAME));//替换掉正则表达式字符串里的机器人名字 同时转化为正则表达式对象
+        var regex = eval(registeredPlugins[key].regex.replace(/\{BOT_NAME\}/g, BOT_NAME).replace(/\{BOT_QQNUM\}/g, BOT_QQNUM));//替换掉正则表达式字符串里的机器人名字 同时转化为正则表达式对象
+        // console.log(regex);
         if (regex.test(packet.message)) {
             log.write(`重定向到${key}处理`, "MessageHandler", "INFO");
             require(`${processPath}/plugins/${key}`)[registeredPlugins[key].handler](packet);//把请求转发给注册的插件处理

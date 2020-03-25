@@ -76,7 +76,32 @@ function prepare(packet, message, at = false) {
     }
 }
 
+function revoke(id) {
+    var data = {};
+    data.message_id = id;
+    var url = `http://${config.get("GLOBAL", "API_HOST")}:${config.get("GLOBAL", "API_HTTP_PORT")}/delete_msg?access_token=${config.get("GLOBAL", "ACCESS_TOKEN")}`;
+    var res = request("POST", url, {
+        json: data
+    });
+    try {
+        var response = JSON.parse(res.getBody("utf8"));
+    } catch (e) {
+        console.log(res.getBody("utf8"));
+        log.write("无法解析服务器返回的数据.", "MESSAGE API] [消息撤回失败", "WARNING");
+        log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [消息撤回失败", "WARNING");
+        return false;
+    }
+    if (response.retcode == 0) {
+        log.write(`消息ID: <${id}>.`, "MESSAGE API] [已撤回消息", "INFO");
+    } else {
+        console.log(res.getBody("utf8"));
+        log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [消息撤回失败", "WARNING");
+        return false;
+    }
+}
+
 module.exports = {
     send,
-    prepare
+    prepare,
+    revoke
 }
