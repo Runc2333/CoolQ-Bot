@@ -49,22 +49,47 @@ function send(type, uid, msg) {
 }
 
 function prepare(packet, message, at = false) {
-    switch (packet.message_type) {
-        case "group":
-            if (at) {
-                message = `${cqcode.at(packet.sender.user_id)}\n${message}`;
+    switch (packet.post_type) {
+        case "message":
+            switch (packet.message_type) {
+                case "group":
+                    if (at) {
+                        message = `${cqcode.at(packet.sender.user_id)}\n${message}`;
+                    }
+                    var type = "group";
+                    var uid = packet.group_id;
+                    break;
+                case "private":
+                    var type = "private";
+                    var uid = packet.user_id;
+                    break;
+                case "discuss":
+                    var type = "discuss";
+                    var uid = packet.discuss_id;
+                    break;
+                default:
+                    log.write("处理失败:传入的参数类型不受支持.", "MESSAGE API", "WARNING");
+                    return false;
             }
-            var type = "group";
-            var uid = packet.group_id;
             break;
-        case "private":
-            var type = "private";
-            var uid = packet.user_id;
+        case "notice":
+            switch (packet.notice_type) {
+                case "friend_add":
+                    var type = "private";
+                    var uid = packet.user_id;
+                    break;
+                default:
+                    if (at) {
+                        message = `${cqcode.at(packet.user_id)}\n${message}`;
+                    }
+                    var type = "group";
+                    var uid = packet.group_id;
+                    break;
+            }
             break;
-        case "discuss":
-            var type = "discuss";
-            var uid = packet.discuss_id;
-            break;
+        case "request":
+            log.write("处理失败:无法处理Request.", "MESSAGE API", "WARNING");
+            return false;
         default:
             log.write("处理失败:传入的参数类型不受支持.", "MESSAGE API", "WARNING");
             return false;

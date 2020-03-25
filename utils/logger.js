@@ -18,7 +18,7 @@ function write(msg, event, level = "INFO"){
 		+":"+
 		(date.getSeconds() < 10 ? "0" + date.getSeconds() : date.getSeconds())
 	).toString();
-	msg = msg.replace(new RegExp("\n","gm"), " ");
+	msg = msg.replace(new RegExp("\n", "gm"), " ").replace(new RegExp("\r", "gm"), "");
 	switch(level){
 		case "INFO":
 			var data = `[${time}] [${level}] [${event}] : ${msg}\n`;

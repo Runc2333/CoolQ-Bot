@@ -51,8 +51,8 @@ bot.on("message", function (_CQEvent, packet) {
 
 //收到通知
 bot.on("notice", function (packet) {
-    // noticeHandler.handle(packet);
-    console.log(packet);
+    noticeHandler.handle(packet);
+    // console.log(packet);
 })
 
 //收到请求

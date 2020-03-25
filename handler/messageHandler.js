@@ -33,7 +33,7 @@ function handle(packet) {
         default:
             log.write("遇到了未定义的事件.", "MessageHandler", "WARNING");
             console.log(packet);
-            break;
+            return false;
     }
     /* 交给注册的插件处理 */
     var registeredPlugins = config.get("GLOBAL", "MESSAGE_REGISTRY")[messageType];

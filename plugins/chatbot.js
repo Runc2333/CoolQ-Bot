@@ -21,7 +21,7 @@ function init() {
         script: "chatbot.js",
         handler: "command",
         argument: "[action]",
-        description: "聊天机器人插件入口, 以下是参数说明:\n[action]:\nenable|disable - 启用或禁用聊天机器人.#admin\nsetapikey [apikey] - 设置插件使用的API KEY."
+        description: "聊天机器人插件入口, 以下是参数说明:\n[action]:\nenable|disable - 启用或禁用聊天机器人.#admin\nsetapikey [apikey] - 设置插件使用的API KEY.#admin"
     });
     if (config.get("CHATBOT") === false) {
         var data = {};

@@ -130,6 +130,7 @@ function registerPlugin(arguments) {
 				}
 			}
 			write("GLOBAL", config, "NOTICE_REGISTRY");
+			break;
 		case "request":
 			var config = get("GLOBAL", "REQUEST_REGISTRY");
 			var subTypes = arguments.subType.split(/\s*,\s*/);
