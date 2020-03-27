@@ -9,6 +9,7 @@ const message = require(`${processPath}/utils/messageApi.js`);//消息接口
 const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
 
 function init() {
+    /*
     config.registerSuperCommand({
         command: "timebot",
         script: "timebot.js",
@@ -49,6 +50,7 @@ function init() {
         log.write("未在配置文件内找到插件配置, 已自动生成默认配置.", "TIMEBOT", "INFO");
     }
     sendTimeSticker();
+    */
 }
 
 function sendTimeSticker() {
