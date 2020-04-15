@@ -8,19 +8,15 @@ const message = require(`${processPath}/utils/messageApi.js`);//消息接口
 const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
 
 function init() {
-    var GROUPS_CONFIGURATIONS = config.get("KEYWORD", "GROUPS_CONFIGURATIONS");
-    for (groupId in GROUPS_CONFIGURATIONS) {
-        for (regex in GROUPS_CONFIGURATIONS[groupId]) {
-            config.registerPlugin({
-                type: "message",
-                subType: "groupMessage, discussMessage",
-                script: "keyword.js",
-                handler: "keyword",
-                regex: regex,
-                description: "匹配关键词发送网址"
-            });
-        }
-    }
+    config.registerPlugin({
+        type: "message",
+        subType: "groupMessage, discussMessage",
+        script: "keyword.js",
+        handler: "keyword",
+        regex: "/./",
+        description: "匹配关键词",
+        notification: false
+    });
     config.registerSuperCommand({
         command: "keyword",
         script: "keyword.js",
@@ -63,22 +59,31 @@ function command(packet) {
     var options = cqcode.decode(packet.message).pureText.split(" ");
     switch (options[1]) {
         case "register":
-            if (packet.sender.role !== "admin" && packet.sender.role !== "owner") {
-                var msg = "[Keyword] 权限不足.";
-                message.prepare(packet, msg, true).send();
+            /* 检查权限 */
+            if (config.checkPermission(packet) === false) {
                 return false;
             }
             options.shift();
             options.shift();
             var regex = options.shift();
+            if (regex === undefined) {
+                var msg = "[Keyword] 请提供一个正则表达式匹配规则.";
+                message.prepare(packet, msg, true).send();
+                return false;
+            }
             var regexMessage = options.join(" ").replace(new RegExp("\r\n", "gm"), "\n");
+            if (regexMessage == "") {
+                var msg = "[Keyword] 请提供匹配时要发送的文字.";
+                message.prepare(packet, msg, true).send();
+                return false;
+            }
             config.registerPlugin({
                 type: "message",
                 subType: "groupMessage, discussMessage",
                 script: "keyword.js",
                 handler: "keyword",
                 regex: regex,
-                description: "匹配关键词发送网址"
+                description: "匹配关键词"
             });
             var GROUPS_CONFIGURATIONS = config.get("KEYWORD", "GROUPS_CONFIGURATIONS");
             GROUPS_CONFIGURATIONS[packet.group_id.toString()] = {};
@@ -88,9 +93,8 @@ function command(packet) {
             message.prepare(packet, msg, true).send();
             break;
         case "remove":
-            if (packet.sender.role !== "admin" && packet.sender.role !== "owner") {
-                var msg = "[Keyword] 权限不足.";
-                message.prepare(packet, msg, true).send();
+            /* 检查权限 */
+            if (config.checkPermission(packet) === false) {
                 return false;
             }
             var GROUPS_CONFIGURATIONS = config.get("KEYWORD", "GROUPS_CONFIGURATIONS");

@@ -16,29 +16,9 @@ function init() {
         regex: "/(^一言|一言$|hitokoto)/",
         description: "获取一句话~"
     });
-    config.registerSuperCommand({
-        command: "hitokoto",
-        script: "hitokoto.js",
-        handler: "command",
-        argument: "[action]",
-        description: "一言插件入口, 以下是参数说明:\n[action]:\nenable|disable - 启用或禁用Hitokoto.#admin"
-    });
-    if (config.get("HITOKOTO") === false) {
-        var data = {};
-        data["DISABLE_GROUPS"] = [];
-        config.write("HITOKOTO", data);
-        log.write("未在配置文件内找到插件配置, 已自动生成默认配置.", "HITOKOTO", "INFO");
-    }
 }
 
 function hitokoto(packet) {
-    if (packet.message_type === "group") {
-        var DISABLE_GROUPS = config.get("HITOKOTO", "DISABLE_GROUPS");
-        var index = DISABLE_GROUPS.indexOf(packet.group_id.toString());
-        if (index !== -1) {
-            return false;
-        }
-    }
     var url = "https://v1.hitokoto.cn/";
     var res = request("GET", url);
     try {
@@ -53,59 +33,7 @@ function hitokoto(packet) {
     message.prepare(packet, msg, true).send();
 }
 
-function command(packet) {
-    var options = cqcode.decode(packet.message).pureText.split(" ");
-    switch (options[1]) {
-        case "enable":
-            /* 检查权限 */
-            if (packet.sender.role !== "admin" && packet.sender.role !== "owner") {
-                var msg = "[Hitokoto] 权限不足.";
-                message.prepare(packet, msg, true).send();
-                return false;
-            }
-            var DISABLE_GROUPS = config.get("HITOKOTO", "DISABLE_GROUPS");//读出配置文件里的已禁用群组
-            var index = DISABLE_GROUPS.indexOf(packet.group_id.toString());//判断是否已经禁用
-            if (index !== -1) {
-                //处于禁用状态
-                DISABLE_GROUPS.splice(index, 1);
-                config.write("HITOKOTO", DISABLE_GROUPS, "DISABLE_GROUPS");
-                var msg = "[Hitokoto] 已启用.";
-            } else {
-                //处于启用状态
-                var msg = "[Hitokoto] 已经是启用状态了, 无需重复启用.";
-            }
-            message.prepare(packet, msg, true).send();
-            break;
-        case "disable":
-            /* 检查权限 */
-            if (packet.sender.role !== "admin" && packet.sender.role !== "owner") {
-                var msg = "[Hitokoto] 权限不足.";
-                message.prepare(packet, msg, true).send();
-                return false;
-            }
-            var DISABLE_GROUPS = config.get("HITOKOTO", "DISABLE_GROUPS");//读出配置文件里的已禁用群组
-            var index = DISABLE_GROUPS.indexOf(packet.group_id.toString());//判断是否已经禁用
-            if (index === -1) {
-                //处于启用状态
-                DISABLE_GROUPS.push(packet.group_id.toString());
-                config.write("HITOKOTO", DISABLE_GROUPS, "DISABLE_GROUPS");
-                var msg = "[Hitokoto] 已禁用.";
-            } else {
-                //处于禁用状态
-                var msg = "[Hitokoto] 已经是禁用状态了, 无需重复禁用.";
-            }
-            message.prepare(packet, msg, true).send();
-            break;
-        default:
-            log.write("处理失败:未知指令.", "HITOKOTO", "WARNING");
-            var msg = "[Hitokoto] 未知指令.";
-            message.prepare(packet, msg, true).send();
-            return false;
-    }
-}
-
 module.exports = {
     init,
-    hitokoto,
-    command
+    hitokoto
 }

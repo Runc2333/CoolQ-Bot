@@ -106,9 +106,7 @@ function command(packet) {
     switch (options[1]) {
         case "enable":
             /* 检查权限 */
-            if (packet.sender.role !== "admin" && packet.sender.role !== "owner") {
-                var msg = "[Timebot] 权限不足.";
-                message.prepare(packet, msg, true).send();
+            if (config.checkPermission(packet) === false) {
                 return false;
             }
             var DISABLE_GROUPS = config.get("TIMEBOT", "DISABLE_GROUPS");//读出配置文件里的已禁用群组
@@ -126,9 +124,7 @@ function command(packet) {
             break;
         case "disable":
             /* 检查权限 */
-            if (packet.sender.role !== "admin" && packet.sender.role !== "owner") {
-                var msg = "[Timebot] 权限不足.";
-                message.prepare(packet, msg, true).send();
+            if (config.checkPermission(packet) === false) {
                 return false;
             }
             var DISABLE_GROUPS = config.get("TIMEBOT", "DISABLE_GROUPS");//读出配置文件里的已禁用群组

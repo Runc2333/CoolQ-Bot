@@ -20,25 +20,17 @@ function init() {
         script: "greeting.js",
         handler: "command",
         argument: "[action]",
-        description: "Greeting插件入口, 以下是参数说明:\n[action]:\nenable|disable - 启用或禁用Greeting插件.#admin\nadd|remove [string] - 添加或删除一句问候语.#admin\ndisplay - 显示当前注册到插件的问候语."
+        description: "Greeting插件入口, 以下是参数说明:\n[action]:\nadd|remove [string] - 添加或删除一句问候语.#admin\ndisplay - 显示当前注册到插件的问候语."
     });
     if (config.get("GREETING") === false) {
         var data = {};
         data["GREETING_STRING"] = ["我在", "在", "欸", "在呢", "什么事？", "一直都在"];
-        data["DISABLE_GROUPS"] = [];
         config.write("GREETING", data);
         log.write("未在配置文件内找到插件配置, 已自动生成默认配置.", "GREETING", "INFO");
     }
 }
 
 function greeting(packet) {
-    if (packet.message_type === "group") {
-        var DISABLE_GROUPS = config.get("GREETING", "DISABLE_GROUPS");
-        var index = DISABLE_GROUPS.indexOf(packet.group_id.toString());
-        if (index !== -1) {
-            return false;
-        }
-    }
     var greeting = config.get("GREETING", "GREETING_STRING");
     var msg = `${greeting[parseInt(Math.random() * greeting.length, 10)]}`;
     message.prepare(packet, msg, true).send();
@@ -47,51 +39,9 @@ function greeting(packet) {
 function command(packet) {
     var options = cqcode.decode(packet.message).pureText.split(" ");
     switch (options[1]) {
-        case "enable":
-            /* 检查权限 */
-            if (packet.sender.role !== "admin" && packet.sender.role !== "owner") {
-                var msg = "[Greeting] 权限不足.";
-                message.prepare(packet, msg, true).send();
-                return false;
-            }
-            var DISABLE_GROUPS = config.get("GREETING", "DISABLE_GROUPS");//读出配置文件里的已禁用群组
-            var index = DISABLE_GROUPS.indexOf(packet.group_id.toString());//判断是否已经禁用
-            if (index !== -1) {
-                //处于禁用状态
-                DISABLE_GROUPS.splice(index, 1);
-                config.write("GREETING", DISABLE_GROUPS, "DISABLE_GROUPS");
-                var msg = "[Greeting] 已启用.";
-            } else {
-                //处于启用状态
-                var msg = "[Greeting] 已经是启用状态了, 无需重复启用.";
-            }
-            message.prepare(packet, msg, true).send();
-            break;
-        case "disable":
-            /* 检查权限 */
-            if (packet.sender.role !== "admin" && packet.sender.role !== "owner") {
-                var msg = "[Greeting] 权限不足.";
-                message.prepare(packet, msg, true).send();
-                return false;
-            }
-            var DISABLE_GROUPS = config.get("GREETING", "DISABLE_GROUPS");//读出配置文件里的已禁用群组
-            var index = DISABLE_GROUPS.indexOf(packet.group_id.toString());//判断是否已经禁用
-            if (index === -1) {
-                //处于启用状态
-                DISABLE_GROUPS.push(packet.group_id.toString());
-                config.write("GREETING", DISABLE_GROUPS, "DISABLE_GROUPS");
-                var msg = "[Greeting] 已禁用.";
-            } else {
-                //处于禁用状态
-                var msg = "[Greeting] 已经是禁用状态了, 无需重复禁用.";
-            }
-            message.prepare(packet, msg, true).send();
-            break;
         case "add":
             /* 检查权限 */
-            if (packet.sender.role !== "admin" && packet.sender.role !== "owner") {
-                var msg = "[Greeting] 权限不足.";
-                message.prepare(packet, msg, true).send();
+            if (config.checkPermission(packet) === false) {
                 return false;
             }
             var GREETING_STRING = config.get("GREETING", "GREETING_STRING");
@@ -107,9 +57,7 @@ function command(packet) {
             break;
         case "remove":
             /* 检查权限 */
-            if (packet.sender.role !== "admin" && packet.sender.role !== "owner") {
-                var msg = "[Greeting] 权限不足.";
-                message.prepare(packet, msg, true).send();
+            if (config.checkPermission(packet) === false) {
                 return false;
             }
             var GREETING_STRING = config.get("GREETING", "GREETING_STRING");

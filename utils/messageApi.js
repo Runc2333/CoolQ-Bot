@@ -26,6 +26,7 @@ function send(type, uid, msg) {
             return false;
     }
     data.message = msg;
+    data.auto_escape = false;
     var url = `http://${config.get("GLOBAL", "API_HOST")}:${config.get("GLOBAL", "API_HTTP_PORT")}/send_msg?access_token=${config.get("GLOBAL", "ACCESS_TOKEN")}`;
     var res = request("POST", url, {
         json: data

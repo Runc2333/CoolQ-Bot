@@ -65,22 +65,28 @@ function registerPlugin(arguments) {
 			for (key in subTypes) {
 				switch (subTypes[key]) {
 					case "groupMessage"://群组消息
-						config["GROUP_MESSAGE"][arguments.script] = {
+						config["GROUP_MESSAGE"].push({
+							"script": arguments.script,
 							"handler": arguments.handler,
-							"regex": arguments.regex
-						};
+							"regex": arguments.regex,
+							"notification": arguments.notification === false ? false : true
+						});
 						break;
 					case "privateMessage"://私聊消息
-						config["PRIVATE_MESSAGE"][arguments.script] = {
+						config["PRIVATE_MESSAGE"].push({
+							"script": arguments.script,
 							"handler": arguments.handler,
-							"regex": arguments.regex
-						};
+							"regex": arguments.regex,
+							"notification": arguments.notification === false ? false : true
+						});
 						break;
 					case "discussMessage"://讨论组消息
-						config["DISCUSS_MESSAGE"][arguments.script] = {
+						config["DISCUSS_MESSAGE"].push({
+							"script": arguments.script,
 							"handler": arguments.handler,
-							"regex": arguments.regex
-						};
+							"regex": arguments.regex,
+							"notification": arguments.notification === false ? false : true
+						});
 						break;
 					default:
 						log.write("未能注册插件: 提供的注册模式不受支持.", "CONFIG API", "WARNING");
@@ -88,6 +94,9 @@ function registerPlugin(arguments) {
 				}
 			}
 			write("GLOBAL", config, "MESSAGE_REGISTRY");
+			if (arguments.notification === false) {
+				log.write("警告: 插件开发者希望隐藏转发处理提示, 您将不会看到有关消息转发给此插件的提示.", "CONFIG API", "WARNING");
+			}
 			break;
 		case "notice":
 			var config = get("GLOBAL", "NOTICE_REGISTRY");
@@ -173,23 +182,38 @@ function registerSuperCommand(arguments) {
 		return false;
 	}
 	var config = get("GLOBAL", "SUPER_COMMAND_REGISTRY");
+	if (typeof (config[arguments.command]) !== "undefined") {
+		log.write(`未能注册插件<${arguments.script}>: 命令</${arguments.command}>已被其他插件注册.`, "CONFIG API", "ERROR");
+		return false;
+	}
 	config[arguments.command] = {};
 	config[arguments.command]["script"] = arguments.script;
 	config[arguments.command]["handler"] = arguments.handler;
 	config[arguments.command]["argument"] = typeof (arguments.argument) !== "undefined" ? arguments.argument : "";
 	config[arguments.command]["description"] = typeof (arguments.description) !== "undefined" ? arguments.description : "";
 	write("GLOBAL", config, "SUPER_COMMAND_REGISTRY");
-	var config = get("GLOBAL", "PLUGIN_REGISTRY");
-	if (typeof (config[arguments.script]) === "undefined") {
-		config[arguments.script] = "该插件开发者未填写描述.";
-		write("GLOBAL", config, "PLUGIN_REGISTRY");
+	if (!arguments.skip) {
+		var config = get("GLOBAL", "PLUGIN_REGISTRY");
+		if (typeof (config[arguments.script]) === "undefined") {
+			config[arguments.script] = "该插件开发者未填写描述.";
+			write("GLOBAL", config, "PLUGIN_REGISTRY");
+		}
 	}
 	log.write(`插件<${arguments.script}>已注册命令</${arguments.command}>.`, "CONFIG API", "INFO");
 }
 
+function checkPermission(packet) {
+	if (packet.sender.role !== "admin" && packet.sender.role !== "owner") {
+		var msg = "权限不足.";
+		message.prepare(packet, msg, true).send();
+		return false;
+	}
+	return true;
+}
+
 /* 初始化配置文件注册区 */
 write("GLOBAL", {}, "PLUGIN_REGISTRY");
-write("GLOBAL", { GROUP_MESSAGE: {}, PRIVATE_MESSAGE: {}, DISCUSS_MESSAGE: {} }, "MESSAGE_REGISTRY");
+write("GLOBAL", { GROUP_MESSAGE: [], PRIVATE_MESSAGE: [], DISCUSS_MESSAGE: [] }, "MESSAGE_REGISTRY");
 write("GLOBAL", { GROUP_UPLOAD: {}, GROUP_ADMIN: {}, GROUP_INCREASE: {}, GROUP_DECREASE: {}, GROUP_BAN: {}, FRIEND_ADD: {} }, "NOTICE_REGISTRY");
 write("GLOBAL", { FRIEND: {}, GROUP: {} }, "REQUEST_REGISTRY");
 write("GLOBAL", {}, "SUPER_COMMAND_REGISTRY");
@@ -198,5 +222,6 @@ module.exports = {
 	get,
 	write,
 	registerPlugin,
-	registerSuperCommand
+	registerSuperCommand,
+	checkPermission
 };

@@ -6,7 +6,7 @@
   "dependencies": {
     "cq-websocket": "^2.1.1",
     "fs": "^0.0.1-security",
-    "svg-captcha": "^1.4.0",
+    "mime-types": "^2.1.26",
     "sync-request": "^6.1.0"
   },
   "devDependencies": {},

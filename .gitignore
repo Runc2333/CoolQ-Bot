@@ -4,3 +4,5 @@
 /plugins/guide.js
 sample.txt
 messages.db
+*.jpg
+*.png

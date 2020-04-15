@@ -7,7 +7,7 @@ function face(code) {
 }
 
 function image(src) {
-    return `[CQ:CQ:image,file=${src}]`;
+    return `[CQ:image,file=${src}]`;
 }
 
 function decode(message) {

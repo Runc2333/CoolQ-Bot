@@ -37,12 +37,28 @@ function handle(packet) {
     }
     /* 交给注册的插件处理 */
     var registeredPlugins = config.get("GLOBAL", "MESSAGE_REGISTRY")[messageType];
+    var GROUP_PLUGIN_SWITCH = config.get("GLOBAL", "GROUP_PLUGIN_SWITCH");
     for (key in registeredPlugins) {
-        var regex = eval(registeredPlugins[key].regex.replace(/\{BOT_NAME\}/g, BOT_NAME).replace(/\{BOT_QQNUM\}/g, BOT_QQNUM));//替换掉正则表达式字符串里的机器人名字 同时转化为正则表达式对象
-        // console.log(regex);
-        if (regex.test(packet.message)) {
-            log.write(`重定向到${key}处理`, "MessageHandler", "INFO");
-            require(`${processPath}/plugins/${key}`)[registeredPlugins[key].handler](packet);//把请求转发给注册的插件处理
+        if (typeof (GROUP_PLUGIN_SWITCH[packet.group_id.toString()]) !== "undefined") {
+            if (GROUP_PLUGIN_SWITCH[packet.group_id.toString()][registeredPlugins[key].script] !== false) {
+                var regex = eval(registeredPlugins[key].regex.replace(/\{BOT_NAME\}/g, BOT_NAME).replace(/\{BOT_QQNUM\}/g, BOT_QQNUM));//替换掉正则表达式字符串里的机器人名字 同时转化为正则表达式对象
+                // console.log(regex);
+                if (regex.test(packet.message)) {
+                    if (registeredPlugins[key].notification !== false) {
+                        log.write(`重定向到${registeredPlugins[key].script}处理`, "MessageHandler", "INFO");
+                    }
+                    require(`${processPath}/plugins/${registeredPlugins[key].script}`)[registeredPlugins[key].handler](packet);//把请求转发给注册的插件处理
+                }
+            }
+        } else {
+            var regex = eval(registeredPlugins[key].regex.replace(/\{BOT_NAME\}/g, BOT_NAME).replace(/\{BOT_QQNUM\}/g, BOT_QQNUM));//替换掉正则表达式字符串里的机器人名字 同时转化为正则表达式对象
+            // console.log(regex);
+            if (regex.test(packet.message)) {
+                if (registeredPlugins[key].notification !== false) {
+                    log.write(`重定向到${registeredPlugins[key].script}处理`, "MessageHandler", "INFO");
+                }
+                require(`${processPath}/plugins/${registeredPlugins[key].script}`)[registeredPlugins[key].handler](packet);//把请求转发给注册的插件处理
+            }
         }
     }
 }

@@ -6,22 +6,30 @@ const log = require(`${processPath}/utils/logger.js`);//日志
 const message = require(`${processPath}/utils/messageApi.js`);//消息接口
 const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
 
-function init() {
-    config.registerSuperCommand({
-        command: "help",
-        script: "help.js",
-        handler: "displayHelpInfo",
-        argument: "",
-        description: "显示指令帮助."
-    });
-    config.registerSuperCommand({
-        command: "plugins",
-        script: "help.js",
-        handler: "displayPluginInfo",
-        argument: "",
-        description: "显示注册到系统的插件."
-    });
-}
+config.registerSuperCommand({
+    command: "help",
+    script: "../systemPlugin/help.js",
+    handler: "displayHelpInfo",
+    argument: "",
+    description: "显示机器人支持的功能.",
+    skip: true
+});
+config.registerSuperCommand({
+    command: "commandHelp",
+    script: "../systemPlugin/help.js",
+    handler: "displayHelpInfo",
+    argument: "",
+    description: "显示指令帮助.",
+    skip: true
+});
+config.registerSuperCommand({
+    command: "plugins",
+    script: "../systemPlugin/help.js",
+    handler: "displayPluginInfo",
+    argument: "",
+    description: "显示注册到系统的插件.",
+    skip: true
+});
 
 function displayHelpInfo(packet) {
     var SUPER_COMMAND_REGISTRY = config.get("GLOBAL", "SUPER_COMMAND_REGISTRY");
@@ -56,7 +64,6 @@ function displayPluginInfo(packet) {
 }
 
 module.exports = {
-    init,
     displayHelpInfo,
     displayPluginInfo
 }

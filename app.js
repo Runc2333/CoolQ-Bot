@@ -23,6 +23,12 @@ log.write("*              Build:2020.03.25              *", "MAIN THREAD", "INFO
 log.write("*              Author: Runc2333              *", "MAIN THREAD", "INFO");
 log.write("**********************************************", "MAIN THREAD", "INFO");
 
+/* 系统插件 */
+log.write("开始载入系统插件...", "MAIN THREAD", "INFO");
+require(`${processPath}/systemPlugin/help.js`);
+require(`${processPath}/systemPlugin/pluginSwitch.js`);
+log.write("系统插件载入完毕.", "MAIN THREAD", "INFO");
+
 /* 局部常量 */
 const API_HOST = config.get("GLOBAL", "API_HOST");//WebSocket API Host
 const API_WEBSOCKET_PORT = config.get("GLOBAL", "API_WEBSOCKET_PORT");//WebSocket API Port
@@ -62,10 +68,15 @@ bot.on("request", function (packet) {
 })
 
 /* 载入插件 */
-log.write("开始载入插件...", "MAIN THREAD", "INFO");
+log.write("开始载入用户插件...", "MAIN THREAD", "INFO");
 var plugins = fs.readdirSync(`${processPath}/plugins`);
 for (i = 0; i < plugins.length; i++) {
     log.write(`已检测到插件: ${plugins[i].split(".")[0]}`, "MAIN THREAD", "INFO");
-    require(`${processPath}/plugins/${plugins[i]}`).init();
+    try {
+        require(`${processPath}/plugins/${plugins[i]}`).init();
+    } catch (e) {
+        log.write(`未能初始化插件<${plugins[i].split(".")[0]}>: 初始化时发生问题.`, "MAIN THREAD", "ERROR");
+    }
+    log.write(`插件<${plugins[i].split(".")[0]}>初始化成功.`, "MAIN THREAD", "INFO");
 }
-log.write("插件载入完毕.", "MAIN THREAD", "INFO");
+log.write("用户插件载入完毕.", "MAIN THREAD", "INFO");
