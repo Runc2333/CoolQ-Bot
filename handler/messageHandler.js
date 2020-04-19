@@ -39,7 +39,7 @@ function handle(packet) {
     var registeredPlugins = config.get("GLOBAL", "MESSAGE_REGISTRY")[messageType];
     var GROUP_PLUGIN_SWITCH = config.get("GLOBAL", "GROUP_PLUGIN_SWITCH");
     for (key in registeredPlugins) {
-        if (typeof (GROUP_PLUGIN_SWITCH[packet.group_id.toString()]) !== "undefined") {
+        if (typeof (GROUP_PLUGIN_SWITCH[packet.group_id]) !== "undefined") {
             if (GROUP_PLUGIN_SWITCH[packet.group_id.toString()][registeredPlugins[key].script] !== false) {
                 var regex = eval(registeredPlugins[key].regex.replace(/\{BOT_NAME\}/g, BOT_NAME).replace(/\{BOT_QQNUM\}/g, BOT_QQNUM));//替换掉正则表达式字符串里的机器人名字 同时转化为正则表达式对象
                 // console.log(regex);
