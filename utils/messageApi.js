@@ -126,8 +126,60 @@ function revoke(id) {
     }
 }
 
+function kick(gid, uid) {
+    var data = {};
+    data.group_id = gid;
+    data.user_id = uid;
+    var url = `http://${config.get("GLOBAL", "API_HOST")}:${config.get("GLOBAL", "API_HTTP_PORT")}/set_group_kick?access_token=${config.get("GLOBAL", "ACCESS_TOKEN")}`;
+    var res = request("POST", url, {
+        json: data
+    });
+    try {
+        var response = JSON.parse(res.getBody("utf8"));
+    } catch (e) {
+        console.log(res.getBody("utf8"));
+        log.write("无法解析服务器返回的数据.", "MESSAGE API] [移除成员失败", "WARNING");
+        log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [移除成员失败", "WARNING");
+        return false;
+    }
+    if (response.retcode == 0) {
+        log.write(`群: <${gid}>. 成员: <${uid}>`, "MESSAGE API] [已移除成员", "INFO");
+    } else {
+        console.log(res.getBody("utf8"));
+        log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [移除成员失败", "WARNING");
+        return false;
+    }
+}
+
+function userinfo(uid) {
+    var data = {};
+    data.user_id = uid;
+    var url = `http://${config.get("GLOBAL", "API_HOST")}:${config.get("GLOBAL", "API_HTTP_PORT")}/get_stranger_info?access_token=${config.get("GLOBAL", "ACCESS_TOKEN")}`;
+    var res = request("POST", url, {
+        json: data
+    });
+    try {
+        var response = JSON.parse(res.getBody("utf8"));
+    } catch (e) {
+        console.log(res.getBody("utf8"));
+        log.write("无法解析服务器返回的数据.", "MESSAGE API] [获取陌生人信息失败", "WARNING");
+        log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [获取陌生人信息失败", "WARNING");
+        return false;
+    }
+    if (response.retcode == 0) {
+        log.write(`目标用户: <${uid}>`, "MESSAGE API] [成功获取陌生人信息", "INFO");
+        return response.data;
+    } else {
+        console.log(res.getBody("utf8"));
+        log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [获取陌生人信息失败", "WARNING");
+        return false;
+    }
+}
+
 module.exports = {
     send,
     prepare,
-    revoke
+    revoke,
+    kick,
+    userinfo
 }

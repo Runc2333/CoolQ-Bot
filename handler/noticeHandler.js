@@ -3,6 +3,7 @@ const processPath = process.cwd().replace(/\\/g, "/");//程序运行路径
 /* 模块 */
 const config = require(`${processPath}/utils/configApi.js`);//设置
 const log = require(`${processPath}/utils/logger.js`);//日志
+const message = require(`${processPath}/utils/messageApi.js`);//消息接口
 const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
 
 function handle(packet) {
@@ -18,6 +19,19 @@ function handle(packet) {
             break;
         case "group_decrease"://退群
             var noticeType = "GROUP_DECREASE";
+            switch (packet.sub_type) {
+                case "leave":
+                    var userinfo = message.userinfo(packet.user_id);
+                    message.prepare(packet, `<${userinfo.nickname}>离开了群聊.`, false).send();
+                    break;
+                case "kick":
+                    var userinfo = message.userinfo(packet.user_id);
+                    var operatorinfo = message.userinfo(packet.operator_id);
+                    message.prepare(packet, `<${userinfo.nickname}>被管理员<${operatorinfo.nickname}>移出了群聊.`, false).send();
+                    break;
+                default:
+                    break;
+            }
             break;
         case "group_ban"://禁言
             var noticeType = "GROUP_BAN";

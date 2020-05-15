@@ -63,8 +63,8 @@ bot.on("notice", function (packet) {
 
 //收到请求
 bot.on("request", function (packet) {
-    // requestHandler.handle(packet);
-    console.log(packet);
+    requestHandler.handle(packet);
+    // console.log(packet);
 })
 
 /* 载入插件 */
