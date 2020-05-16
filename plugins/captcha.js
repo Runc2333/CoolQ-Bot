@@ -20,7 +20,7 @@ function init() {
         subType: "groupMessage",
         script: "captcha.js",
         handler: "auth",
-        regex: "/我不是机器人/",
+        regex: "/(我不是机器人|您也可通过复制并发送这条消息来完成验证)/",
         description: "给新成员发送入群验证",
         notification: false
     });
@@ -36,14 +36,18 @@ function captcha(packet) {
     setTimeout(function () {
         var PENDING_CAPTCHA = config.get("CAPTCHA", "PENDING_CAPTCHA");
         if (PENDING_CAPTCHA.indexOf(packet.user_id.toString()) !== -1) {
-            message.prepare(packet, "您将在100秒后被移出群组, 若要避免, 请发送<我不是机器人>以确认您的身份.", true).send();
+            message.prepare(packet, "您将在100秒后被移出群组，若要避免，请发送<我不是机器人>以确认您的身份.\n提示:您也可通过复制并发送这条消息来完成验证.", true).send();
         }
         console.log("Timer1 Done.");
     }, 200 * 1000);
     setTimeout(function () {
         var PENDING_CAPTCHA = config.get("CAPTCHA", "PENDING_CAPTCHA");
         if (PENDING_CAPTCHA.indexOf(packet.user_id.toString()) !== -1) {
-            message.kick(packet.group_id, packet.user_id);
+            // var userinfo = message.userinfo(packet.user_id);
+            message.prepare(packet, `您已因超时未验证被移出群聊，若有需要，您可重新申请加入.`, true).send();
+            setTimeout(function () {
+                message.kick(packet.group_id, packet.user_id);
+            }, 1500);
         }
         console.log("Timer2 Done.");
         PENDING_CAPTCHA.splice(PENDING_CAPTCHA.indexOf(packet.user_id.toString()), 1);
@@ -53,7 +57,7 @@ function captcha(packet) {
     PENDING_CAPTCHA.push(packet.user_id.toString());
     console.log(PENDING_CAPTCHA);
     config.write("CAPTCHA", PENDING_CAPTCHA, "PENDING_CAPTCHA");
-    message.prepare(packet, "欢迎加入群聊！\n请在300秒内发送<我不是机器人>以确认您的身份.若超时未发送, 您将会被移出群聊.", true).send();
+    message.prepare(packet, "欢迎加入群聊！\n请在300秒内发送<我不是机器人>以确认您的身份.\n若超时未发送, 您将会被移出群聊.\n提示:您也可通过复制并发送这条消息来完成验证.", true).send();
 }
 
 function auth(packet) {

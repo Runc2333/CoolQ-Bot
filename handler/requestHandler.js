@@ -35,6 +35,12 @@ function handle(packet) {
                     var data = {};
                     data.flag = packet.flag;
                     data.sub_type = packet.sub_type;
+                    if (/炫舞/.test(packet.comment) === true || data.group_id != "930458423") {
+                        data.approve = true;
+                    } else {
+                        data.approve = false;
+                        data.reason = "请正确回答问题.(提示: 炫舞)";
+                    }
                     var url = `http://${config.get("GLOBAL", "API_HOST")}:${config.get("GLOBAL", "API_HTTP_PORT")}/set_group_add_request?access_token=${config.get("GLOBAL", "ACCESS_TOKEN")}`;
                     var res = request("POST", url, {
                         json: data
