@@ -89,8 +89,27 @@ function prepare(packet, message, at = false) {
             }
             break;
         case "request":
-            log.write("处理失败:无法处理Request.", "MESSAGE API", "WARNING");
-            return false;
+            switch (packet.request_type) {
+                case "friend":
+                    var type = "private";
+                    var uid = packet.user_id;
+                    break;
+                case "group":
+                    if (at) {
+                        message = `${cqcode.at(packet.user_id)}\n${message}`;
+                    }
+                    var type = "group";
+                    var uid = packet.group_id;
+                    break;
+                default:
+                    if (at) {
+                        message = `${cqcode.at(packet.user_id)}\n${message}`;
+                    }
+                    var type = "group";
+                    var uid = packet.group_id;
+                    break
+            }
+            break;
         default:
             log.write("处理失败:传入的参数类型不受支持.", "MESSAGE API", "WARNING");
             return false;
