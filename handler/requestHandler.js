@@ -36,7 +36,7 @@ function handle(packet) {
                     var data = {};
                     data.flag = packet.flag;
                     data.sub_type = packet.sub_type;
-                    if (/炫舞/.test(packet.comment) === true || packet.group_id != "930458423") {
+                    if (/(炫舞|爆气)/.test(packet.comment) === true || packet.group_id != "930458423") {
                         data.approve = true;
                         // console.log(packet);
                     } else {

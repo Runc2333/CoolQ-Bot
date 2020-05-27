@@ -165,6 +165,7 @@ function kick(gid, uid) {
         log.write(`群: <${gid}>. 成员: <${uid}>`, "MESSAGE API] [已移除成员", "INFO");
     } else {
         console.log(res.getBody("utf8"));
+        send("group", gid, `未能移除群成员<${userinfo(uid).nickname}>.\n可能的原因: 权限不足.`);
         log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [移除成员失败", "WARNING");
         return false;
     }
@@ -195,10 +196,20 @@ function userinfo(uid) {
     }
 }
 
+function checkPermission(packet) {
+    if (packet.sender.role !== "admin" && packet.sender.role !== "owner") {
+        var msg = "权限不足.";
+        prepare(packet, msg, true).send();
+        return false;
+    }
+    return true;
+}
+
 module.exports = {
     send,
     prepare,
     revoke,
     kick,
-    userinfo
+    userinfo,
+    checkPermission
 }

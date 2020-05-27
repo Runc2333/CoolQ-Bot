@@ -10,7 +10,7 @@ const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
 function init() {
     config.registerPlugin({
         type: "message",
-        subType: "groupMessage, discussMessage, privateMessage",
+        subType: "groupMessage, discussMessage",
         script: "chatbot.js",
         handler: "chatbot",
         regex: "/./",
@@ -48,6 +48,11 @@ function chatbot(packet) {
             return false;
         }
     }
+    if (userId == "2821116126") {
+        var msg = "[ChatBot] 拒绝执行.";
+        message.prepare(packet, msg, true).send();
+        return false;
+    }
     var apikey = config.get("CHATBOT", "API_KEY")[packet.group_id];
     if (apikey === undefined) {
         apikey = "xiaosi"
@@ -65,7 +70,7 @@ function chatbot(packet) {
         log.write("请检查后端服务器是否工作正常.", "HITOKOTO", "WARNING");
         return false;
     }
-    var msg = `${response.data.info.text.replace("小思", "老人机")}`;
+    var msg = `${response.data.info.text.replace(/小思/g, "老人机")}`;
     message.prepare(packet, msg, true).send();
 }
 
@@ -74,7 +79,7 @@ function command(packet) {
     switch (options[1]) {
         case "setapikey":
             /* 检查权限 */
-            if (config.checkPermission(packet) === false) {
+            if (message.checkPermission(packet) === false) {
                 return false;
             }
             /* 检查必须参数 */
@@ -93,6 +98,11 @@ function command(packet) {
             break;
         case "alwaysReply":
             var userId = packet.sender.user_id;
+            if (userId == "2821116126") {
+                var msg = "[ChatBot] 拒绝执行.";
+                message.prepare(packet, msg, true).send();
+                return false;
+            }
             switch (options[2]) {
                 case "enable":
                     var ALWAYS_REPLY = config.get("CHATBOT", "ALWAYS_REPLY");

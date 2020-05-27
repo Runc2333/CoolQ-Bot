@@ -47,8 +47,8 @@ function handle(packet) {
     /* 交给注册的插件处理 */
     var registeredPlugins = config.get("GLOBAL", "NOTICE_REGISTRY")[noticeType];
     for (key in registeredPlugins) {
-        log.write(`重定向到${key}处理`, "NoticeHandler", "INFO");
-        require(`${processPath}/plugins/${key}`)[registeredPlugins[key].handler](packet);//把请求转发给注册的插件处理
+        log.write(`重定向到${registeredPlugins[key].script}处理`, "NoticeHandler", "INFO");
+        require(`${processPath}/plugins/${registeredPlugins[key].script}`)[registeredPlugins[key].handler](packet);//把请求转发给注册的插件处理
     }
 }
 

@@ -60,7 +60,7 @@ function command(packet) {
     switch (options[1]) {
         case "register":
             /* 检查权限 */
-            if (config.checkPermission(packet) === false) {
+            if (message.checkPermission(packet) === false) {
                 return false;
             }
             options.shift();
@@ -71,20 +71,17 @@ function command(packet) {
                 message.prepare(packet, msg, true).send();
                 return false;
             }
+            if (/^\/[^\/]+?\/$/.test(regex) === false) {
+                var msg = "[Keyword] 提供的参数(2)不是一个正则表达式.\n请提供一个正确的正则表达式.\n参考: https://deerchao.cn/tutorials/regex/regex.htm";
+                message.prepare(packet, msg, true).send();
+                return false;
+            }
             var regexMessage = options.join(" ").replace(new RegExp("\r\n", "gm"), "\n");
             if (regexMessage == "") {
                 var msg = "[Keyword] 请提供匹配时要发送的文字.";
                 message.prepare(packet, msg, true).send();
                 return false;
             }
-            config.registerPlugin({
-                type: "message",
-                subType: "groupMessage, discussMessage",
-                script: "keyword.js",
-                handler: "keyword",
-                regex: regex,
-                description: "匹配关键词"
-            });
             var GROUPS_CONFIGURATIONS = config.get("KEYWORD", "GROUPS_CONFIGURATIONS");
             GROUPS_CONFIGURATIONS[packet.group_id.toString()] = {};
             GROUPS_CONFIGURATIONS[packet.group_id.toString()][regex] = regexMessage;
@@ -94,7 +91,7 @@ function command(packet) {
             break;
         case "remove":
             /* 检查权限 */
-            if (config.checkPermission(packet) === false) {
+            if (message.checkPermission(packet) === false) {
                 return false;
             }
             var GROUPS_CONFIGURATIONS = config.get("KEYWORD", "GROUPS_CONFIGURATIONS");

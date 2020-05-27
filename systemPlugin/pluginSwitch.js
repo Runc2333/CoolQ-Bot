@@ -26,7 +26,7 @@ config.registerSuperCommand({
 
 function enable(packet) {
     /* 检查权限 */
-    if(config.checkPermission(packet) === false){
+    if(message.checkPermission(packet) === false){
         return false;
     }
     var GROUP_PLUGIN_SWITCH = config.get("GLOBAL", "GROUP_PLUGIN_SWITCH");
@@ -55,7 +55,7 @@ function enable(packet) {
 
 function disable(packet) {
     /* 检查权限 */
-    if (config.checkPermission(packet) === false) {
+    if (message.checkPermission(packet) === false) {
         return false;
     }
     var GROUP_PLUGIN_SWITCH = config.get("GLOBAL", "GROUP_PLUGIN_SWITCH");

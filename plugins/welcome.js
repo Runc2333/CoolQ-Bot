@@ -43,7 +43,7 @@ function command(packet) {
     switch (options[1]) {
         case "set":
             /* 检查权限 */
-            if (config.checkPermission(packet) === false) {
+            if (message.checkPermission(packet) === false) {
                 return false;
             }
             var DISABLE_GROUPS = config.get("WELCOME", "DISABLE_GROUPS");//读出配置文件里的已禁用群组
@@ -65,7 +65,7 @@ function command(packet) {
             break;
         case "remove":
             /* 检查权限 */
-            if (config.checkPermission(packet) === false) {
+            if (message.checkPermission(packet) === false) {
                 return false;
             }
             var welcomeStrings = config.get("WELCOME", "GROUP_WELCOME_STRINGS");

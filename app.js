@@ -30,6 +30,7 @@ require(`${processPath}/systemPlugin/pluginSwitch.js`);
 log.write("系统插件载入完毕.", "MAIN THREAD", "INFO");
 
 /* 局部常量 */
+const BOT_QQNUM = config.get("GLOBAL", "BOT_QQNUM");
 const API_HOST = config.get("GLOBAL", "API_HOST");//WebSocket API Host
 const API_WEBSOCKET_PORT = config.get("GLOBAL", "API_WEBSOCKET_PORT");//WebSocket API Port
 const ACCESS_TOKEN = config.get("GLOBAL", "ACCESS_TOKEN");//WebSocket Access Token
@@ -52,11 +53,17 @@ bot.on("ready", function () {
 
 //收到消息
 bot.on("message", function (_CQEvent, packet) {
+    if (packet.sender.user_id == BOT_QQNUM) {
+        return false;
+    }
     messageHandler.handle(packet);
 });
 
 //收到通知
 bot.on("notice", function (packet) {
+    if (packet.user_id == BOT_QQNUM) {
+        return false;
+    }
     noticeHandler.handle(packet);
     // console.log(packet);
 })
@@ -75,6 +82,7 @@ for (i = 0; i < plugins.length; i++) {
     try {
         require(`${processPath}/plugins/${plugins[i]}`).init();
     } catch (e) {
+        console.log(e);
         log.write(`未能初始化插件<${plugins[i].split(".")[0]}>: 初始化时发生问题.`, "MAIN THREAD", "ERROR");
     }
     log.write(`插件<${plugins[i].split(".")[0]}>初始化成功.`, "MAIN THREAD", "INFO");

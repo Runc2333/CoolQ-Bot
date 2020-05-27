@@ -41,7 +41,7 @@ function command(packet) {
     switch (options[1]) {
         case "add":
             /* 检查权限 */
-            if (config.checkPermission(packet) === false) {
+            if (message.checkPermission(packet) === false) {
                 return false;
             }
             var GREETING_STRING = config.get("GREETING", "GREETING_STRING");
@@ -57,7 +57,7 @@ function command(packet) {
             break;
         case "remove":
             /* 检查权限 */
-            if (config.checkPermission(packet) === false) {
+            if (message.checkPermission(packet) === false) {
                 return false;
             }
             var GREETING_STRING = config.get("GREETING", "GREETING_STRING");

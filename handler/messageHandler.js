@@ -4,6 +4,7 @@ const processPath = process.cwd().replace(/\\/g, "/");//程序运行路径
 const config = require(`${processPath}/utils/configApi.js`);//设置
 const log = require(`${processPath}/utils/logger.js`);//日志
 const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
+const message = require(`${processPath}/utils/messageApi.js`);//消息接口
 /* 事件处理程序 */
 const superCommandHandler = require(`${processPath}/systemPlugin/superCommand.js`);
 

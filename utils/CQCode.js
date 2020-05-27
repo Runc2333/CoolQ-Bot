@@ -14,7 +14,7 @@ function decode(message) {
     var CQObjects = message.match(/\[CQ:.+?]/ig);
     var returnObject = {};
     returnObject.CQObjects = CQObjects;
-    returnObject.pureText = message.replace(/\[CQ:.+?]/ig, "").replace(/^\s+|\s+$/ig, "");
+    returnObject.pureText = message.replace(/\[CQ:[\s\S]+?]/ig, "").replace(/^\s+|\s+$/ig, "");
     return returnObject;
 }
 
