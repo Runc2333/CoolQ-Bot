@@ -34,8 +34,16 @@ function init() {
         handler: "userExit",
         description: "给新成员发送入群欢迎"
     });
+    // config.registerSuperCommand({
+    //     command: "captcha",
+    //     script: "captcha.js",
+    //     handler: "command",
+    //     argument: "[action]",
+    //     description: "入群验证插件入口, 以下是参数说明:\n[action]:\nenable - 启用入群验证.#admin\ndisable - 禁用入群验证.#admin"
+    // });
     if (config.get("CAPTCHA") === false) {
         var data = {};
+        // data["IGNORED_GROUPS"] = [];
         data["PENDING_CAPTCHA"] = [];
         config.write("CAPTCHA", data);
         log.write("未在配置文件内找到插件配置, 已自动生成默认配置.", "CAPTCHA", "INFO");
@@ -73,6 +81,10 @@ function init() {
 }
 
 function captcha(packet) {
+    var IGNORED_GROUPS = config.get("CAPTCHA", "IGNORED_GROUPS");
+    if (IGNORED_GROUPS.indexOf(packet.group_id.toString()) !== -1) {
+        return false;
+    }
     var captchaImage = svgCaptcha.create({
         size: 6,
         ignoreChars: "iIlLoOqQgG10",
@@ -159,9 +171,49 @@ function userExit(packet) {
     config.write("CAPTCHA", PENDING_CAPTCHA, "PENDING_CAPTCHA");
 }
 
+// function command(packet) {
+//     var options = cqcode.decode(packet.message).pureText.split(" ");
+//     switch (options[1]) {
+//         case "enable":
+//             var IGNORED_GROUPS = config.get("CAPTCHA", "IGNORED_GROUPS");
+//             var index = IGNORED_GROUPS.indexOf(packet.group_id.toString());//判断是否已经禁用
+//             if (index === -1) {
+//                 //处于启用状态
+//                 var msg = "[Captcha] 已经是启用状态了, 无需重复启用.";
+//             } else {
+//                 //处于禁用状态
+//                 IGNORED_GROUPS.splice(index, 1);
+//                 config.write("CHATBOT", IGNORED_GROUPS, "IGNORED_GROUPS");
+//                 var msg = "[Captcha] 成功启用入群验证功能，从现在开始，新加群的成员将需要完成验证码.";
+//             }
+//             message.prepare(packet, msg, true).send();
+//             break;
+//         case "disable":
+//             var IGNORED_GROUPS = config.get("CAPTCHA", "IGNORED_GROUPS");
+//             var index = IGNORED_GROUPS.indexOf(packet.group_id.toString());//判断是否已经禁用
+//             if (index === -1) {
+//                 //处于启用状态
+//                 IGNORED_GROUPS.push(userId.toString());
+//                 config.write("CHATBOT", IGNORED_GROUPS, "IGNORED_GROUPS");
+//                 var msg = "[Captcha] 成功禁用入群验证功能，从现在开始，新加群的成员将不需要进行验证.";
+//             } else {
+//                 //处于禁用状态
+//                 var msg = "[Captcha] 已经是禁用状态了, 无需重复禁用.";
+//             }
+//             message.prepare(packet, msg, true).send();
+//             break;
+//         default:
+//             log.write("处理失败:未知指令.", "CAPTCHA", "WARNING");
+//             var msg = "[Captcha] 未知指令.";
+//             message.prepare(packet, msg, true).send();
+//             return false;
+//     }
+// }
+
 module.exports = {
     init,
     captcha,
     auth,
-    userExit
+    userExit,
+    // command
 }

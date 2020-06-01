@@ -4,9 +4,13 @@ const processPath = process.cwd().replace(/\\/g, "/");//程序运行路径
 const request = require("sync-request");//同步网络请求
 const log = require(`${processPath}/utils/logger.js`);//日志
 const config = require(`${processPath}/utils/configApi.js`);//设置
-const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
+// const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
 
-function send(type, uid, msg) {
+function cqat(uin) {
+    return `[CQ:at,qq=${uin}]`;
+}
+
+function send(type, uid, msg, escape = false) {
     var data = {};
     switch (type) {
         case "group":
@@ -26,7 +30,7 @@ function send(type, uid, msg) {
             return false;
     }
     data.message = msg;
-    data.auto_escape = false;
+    data.auto_escape = escape === true ? true : false;
     var url = `http://${config.get("GLOBAL", "API_HOST")}:${config.get("GLOBAL", "API_HTTP_PORT")}/send_msg?access_token=${config.get("GLOBAL", "ACCESS_TOKEN")}`;
     var res = request("POST", url, {
         json: data
@@ -55,7 +59,7 @@ function prepare(packet, message, at = false) {
             switch (packet.message_type) {
                 case "group":
                     if (at) {
-                        message = `${cqcode.at(packet.sender.user_id)}\n${message}`;
+                        message = `${cqat(packet.sender.user_id)}\n${message}`;
                     }
                     var type = "group";
                     var uid = packet.group_id;
@@ -81,7 +85,7 @@ function prepare(packet, message, at = false) {
                     break;
                 default:
                     if (at) {
-                        message = `${cqcode.at(packet.user_id)}\n${message}`;
+                        message = `${cqat(packet.user_id)}\n${message}`;
                     }
                     var type = "group";
                     var uid = packet.group_id;
@@ -96,14 +100,14 @@ function prepare(packet, message, at = false) {
                     break;
                 case "group":
                     if (at) {
-                        message = `${cqcode.at(packet.user_id)}\n${message}`;
+                        message = `${cqat(packet.user_id)}\n${message}`;
                     }
                     var type = "group";
                     var uid = packet.group_id;
                     break;
                 default:
                     if (at) {
-                        message = `${cqcode.at(packet.user_id)}\n${message}`;
+                        message = `${cqat(packet.user_id)}\n${message}`;
                     }
                     var type = "group";
                     var uid = packet.group_id;
@@ -138,6 +142,7 @@ function revoke(id, packet = "fuck") {
     }
     if (response.retcode == 0) {
         log.write(`消息ID: <${id}>.`, "MESSAGE API] [已撤回消息", "INFO");
+        return true;
     } else {
         console.log(res.getBody("utf8"));
         if (packet != "fuck") {

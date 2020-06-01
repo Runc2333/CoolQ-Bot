@@ -23,14 +23,14 @@ module.exports = {
 
             // 验证服务调用返回的状态是否成功，如果为200, 为成功, 否则失败。
             if (response.statusCode !== 200) {
-                console.log('Http status code is: ' + response.statusCode);
+                // console.log('Http status code is: ' + response.statusCode);
             }
 
             // 返回文本内容检测服务结果
             response.on("data", function (chunk) {
                 // 返回中文unicode处理
                 var result = JSON.parse(chunk.toString());
-                callback(JSON.stringify(result));
+                callback(result);
             })
         });
 
@@ -57,20 +57,20 @@ module.exports = {
             "items": items              // items: 待检测的文本列表  text 待检测文本 type 文本类型
         };
         var req = new signer.HttpRequest();
-        var options = utils.getHttpRequestEntity(sig, req, endPoint, "POST", ais.MODERATION_TEXT, "", {"Content-Type": "application/json"}, requestData);
+        var options = utils.getHttpRequestEntity(sig, req, endPoint, "POST", ais.MODERATION_TEXT, "", { "Content-Type": "application/json" }, requestData);
 
         var request = https.request(options, function (response) {
 
             // 验证服务调用返回的状态是否成功，如果为200, 为成功, 否则失败。
             if (response.statusCode !== 200) {
-                console.log('Http status code is: ' + response.statusCode);
+                // console.log('Http status code is: ' + response.statusCode);
             }
 
             // 返回图像内容检测服务结果信息
             response.on("data", function (chunk) {
                 // 返回中文unicode处理
                 var result = JSON.parse(chunk.toString());
-                callback(JSON.stringify(result));
+                callback(result);
             })
         });
 

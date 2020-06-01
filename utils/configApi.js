@@ -177,9 +177,11 @@ function registerPlugin(arguments) {
 			return false;
 	}
 	var config = get("GLOBAL", "PLUGIN_REGISTRY");
-	if (typeof (config[arguments.script]) === "undefined") {
-		config[arguments.script] = typeof (arguments.description) !== "undefined" ? arguments.description : "该插件开发者未填写描述.";
-		write("GLOBAL", config, "PLUGIN_REGISTRY");
+	if (!arguments.skip) {
+		if (typeof (config[arguments.script]) === "undefined") {
+			config[arguments.script] = typeof (arguments.description) !== "undefined" ? arguments.description : "该插件开发者未填写描述.";
+			write("GLOBAL", config, "PLUGIN_REGISTRY");
+		}
 	}
 	var sections = { "message": "MESSAGE事件", "notice": "NOTICE事件", "request": "REQUEST事件" };
 	log.write(`插件<${arguments.script}>已注册${sections[arguments.type]}.`, "CONFIG API", "INFO");

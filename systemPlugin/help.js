@@ -14,7 +14,8 @@ config.registerPlugin({
     handler: "displayReadableHelpInfo",
     regex: "/帮助/",
     description: "显示机器人支持的功能~",
-    notification: false
+    notification: false,
+    skip: true
 });
 config.registerSuperCommand({
     command: "help",
@@ -70,6 +71,9 @@ function displayPluginInfo(packet) {
     for (key in registeredPlugins) {
         msg += `${key}: ${registeredPlugins[key]}\n`;
     }
+    msg += `${globalPlaceholder}\n`;
+    msg += "使用“/enable 插件名”来启用指定插件.\n"
+    msg += "使用“/disable 插件名”来禁用指定插件.\n"
     message.prepare(packet, msg, true).send();
 }
 

@@ -17,14 +17,15 @@ const superCommandHandler = require(`${processPath}/systemPlugin/superCommand.js
 
 /* 打印程序信息 */
 log.write("**********************************************", "MAIN THREAD", "INFO");
-log.write("*              CoolQ-Bot v0.0.2              *", "MAIN THREAD", "INFO");
+log.write("*              CoolQ-Bot v0.1.0              *", "MAIN THREAD", "INFO");
 log.write("*             Written In Node.js             *", "MAIN THREAD", "INFO");
-log.write("*              Build:2020.03.25              *", "MAIN THREAD", "INFO");
+log.write("*              Build:2020.06.01              *", "MAIN THREAD", "INFO");
 log.write("*              Author: Runc2333              *", "MAIN THREAD", "INFO");
 log.write("**********************************************", "MAIN THREAD", "INFO");
 
 /* 系统插件 */
 log.write("开始载入系统插件...", "MAIN THREAD", "INFO");
+require(`${processPath}/systemPlugin/moderation.js`);
 require(`${processPath}/systemPlugin/help.js`);
 require(`${processPath}/systemPlugin/pluginSwitch.js`);
 log.write("系统插件载入完毕.", "MAIN THREAD", "INFO");
@@ -54,7 +55,7 @@ bot.on("ready", function () {
     //     message.send("group", item.group_id, `后端进程已启动或已被重载.\n机器人服务已恢复可用.`);
     // });
     GLOBAL_ADMINISTRATORS.forEach(function (item) {
-        message.send("private", item, "后端进程已启动或已被重载.\n机器人服务已恢复可用.")
+        message.send("private", item, "后端进程已启动或已被重载.\n机器人服务已恢复可用.");
     });
 });
 
@@ -96,9 +97,9 @@ process.on("exit", (code) => {
 /* 捕获异常 */
 process.on("uncaughtException", function (err) {
     console.log(`Caught exception: ${err}`);
-    message.getGroupList().forEach(function (item) {
-        message.send("group", item.group_id, `后端进程在运行中捕获到了一个异常, 请尽快查看日志.错误详情: \n${err}`);
-    });
+    // message.getGroupList().forEach(function (item) {
+    //     message.send("group", item.group_id, `后端进程在运行中捕获到了一个异常, 请尽快查看日志.错误详情: \n${err}`);
+    // });
     GLOBAL_ADMINISTRATORS.forEach(function (item) {
         message.send("private", item, `后端进程在运行中捕获到了一个异常, 请尽快查看日志.错误详情: \n${err}`);
     });

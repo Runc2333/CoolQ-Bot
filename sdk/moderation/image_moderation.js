@@ -28,12 +28,12 @@ module.exports = {
 
             // 验证服务调用返回的状态是否成功，如果为200, 为成功, 否则失败。
             if (response.statusCode !== 200) {
-                console.log('Http status code is: ' + response.statusCode);
+                // console.log('Http status code is: ' + response.statusCode);
             }
 
             // 返回图像内容检测服务结果
             response.on("data", function (chunk) {
-                callback(chunk.toString());
+                callback(JSON.parse(chunk.toString()));
             })
         });
 
@@ -69,12 +69,12 @@ module.exports = {
 
             // 验证服务调用返回的状态是否成功，如果为200, 为成功, 否则失败。
             if (response.statusCode !== 200) {
-                console.log('Http status code is: ' + response.statusCode);
+                // console.log('Http status code is: ' + response.statusCode);
             }
 
             // 返回图像内容检测服务结果信息
             response.on("data", function (chunk) {
-                callback(chunk.toString());
+                callback(JSON.parse(chunk.toString()));
             })
         });
 

@@ -52,8 +52,12 @@ function chatbot(packet) {
     if (apikey === undefined) {
         apikey = "xiaosi"
     }
-    var regex = eval(`/(^${config.get("GLOBAL", "BOT_NAME")}|\\[CQ:at,qq=${config.get("GLOBAL", "BOT_QQNUM")}\\])/`);
-    var spoken = packet.message.replace(regex, "");
+    var regex = eval(`/(^${config.get("GLOBAL", "BOT_NAME")}|\\[CQ:at,qq=${config.get("GLOBAL", "BOT_QQNUM")}\\])/ig`);
+    var spoken = cqcode.decode(packet.message).pureText.replace(regex, "小思");
+    if (spoken.length == 0) {
+        message.prepare(packet, `你不能给老人机发送一条空白的消息哦~\n老人机目前还无法理解除文字外的信息.`, true).send();
+        return false;
+    }
     var url = encodeURI(`https://api.ownthink.com/bot?appid=${apikey}&spoken=${spoken}&userid=${packet.sender.user_id}`);
     // console.log(url);
     var res = request("GET", url);

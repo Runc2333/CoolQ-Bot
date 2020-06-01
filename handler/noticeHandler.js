@@ -75,11 +75,23 @@ function handle(packet) {
             console.log(packet);
             return false;
     }
-    /* 交给注册的插件处理 */
+/* 交给注册的插件处理 */
+    var GROUP_PLUGIN_SWITCH = config.get("GLOBAL", "GROUP_PLUGIN_SWITCH");
     var registeredPlugins = config.get("GLOBAL", "NOTICE_REGISTRY")[noticeType];
     for (key in registeredPlugins) {
-        log.write(`重定向到${registeredPlugins[key].script}处理`, "NoticeHandler", "INFO");
-        require(`${processPath}/plugins/${registeredPlugins[key].script}`)[registeredPlugins[key].handler](packet);//把请求转发给注册的插件处理
+        if (typeof (GROUP_PLUGIN_SWITCH[packet.group_id]) !== "undefined") {
+            if (GROUP_PLUGIN_SWITCH[packet.group_id.toString()][registeredPlugins[key].script] !== false) {
+                if (registeredPlugins[key].notification !== false) {
+                    log.write(`重定向到${registeredPlugins[key].script}处理`, "NoticeHandler", "INFO");
+                }
+                require(`${processPath}/plugins/${registeredPlugins[key].script}`)[registeredPlugins[key].handler](packet);//把请求转发给注册的插件处理
+            }
+        } else {
+            if (registeredPlugins[key].notification !== false) {
+                log.write(`重定向到${registeredPlugins[key].script}处理`, "NoticeHandler", "INFO");
+            }
+            require(`${processPath}/plugins/${registeredPlugins[key].script}`)[registeredPlugins[key].handler](packet);//把请求转发给注册的插件处理
+        }
     }
 }
 
