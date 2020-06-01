@@ -262,6 +262,33 @@ function checkPermission(packet) {
     return true;
 }
 
+function checkSelfPermission(gid) {
+    var data = {};
+    data.group_id = gid;
+    data.user_id = config.get("GLOBAL", "BOT_QQNUM");
+    data.no_cache = true;
+    var url = `http://${config.get("GLOBAL", "API_HOST")}:${config.get("GLOBAL", "API_HTTP_PORT")}/get_group_member_info?access_token=${config.get("GLOBAL", "ACCESS_TOKEN")}`;
+    var res = request("POST", url, {
+        json: data
+    });
+    try {
+        var response = JSON.parse(res.getBody("utf8"));
+    } catch (e) {
+        console.log(res.getBody("utf8"));
+        log.write("无法解析服务器返回的数据.", "MESSAGE API] [获取机器人权限失败", "WARNING");
+        log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [获取机器人权限失败", "WARNING");
+        return false;
+    }
+    if (response.retcode == 0) {
+        log.write(`成功获取机器人权限`, "MESSAGE API", "INFO");
+        return response.data.role == "member" ? false : true;
+    } else {
+        console.log(res.getBody("utf8"));
+        log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [获取机器人权限失败", "WARNING");
+        return false;
+    }
+}
+
 module.exports = {
     send,
     prepare,
@@ -270,5 +297,6 @@ module.exports = {
     userinfo,
     getGroupList,
     mute,
-    checkPermission
+    checkPermission,
+    checkSelfPermission
 }

@@ -81,6 +81,10 @@ function init() {
 }
 
 function captcha(packet) {
+    if (message.checkSelfPermission(packet.group_id) === false) {
+        message.prepare(packet, `欢迎加入群聊！\n因无管理员权限，入群验证能力已停用.`, true).send();
+        return false;
+    }
     var IGNORED_GROUPS = config.get("CAPTCHA", "IGNORED_GROUPS");
     if (IGNORED_GROUPS.indexOf(packet.group_id.toString()) !== -1) {
         return false;

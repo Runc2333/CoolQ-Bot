@@ -85,9 +85,9 @@ bot.on("request", function (packet) {
 
 /* 程序退出事件 */
 process.on("exit", (code) => {
-    message.getGroupList().forEach(function (item) {
-        message.send("group", item.group_id, `后端进程已捕获到终止指令，正在退出.\n机器人服务将暂时不可用.`);
-    });
+    // message.getGroupList().forEach(function (item) {
+    //     message.send("group", item.group_id, `后端进程已捕获到终止指令，正在退出.\n机器人服务将暂时不可用.`);
+    // });
     GLOBAL_ADMINISTRATORS.forEach(function (item) {
         message.send("private", item, `后端进程已捕获到终止指令，正在退出.\n机器人服务将暂时不可用.`);
     });
@@ -119,3 +119,15 @@ for (i = 0; i < plugins.length; i++) {
     log.write(`插件<${plugins[i].split(".")[0]}>初始化成功.`, "MAIN THREAD", "INFO");
 }
 log.write("用户插件载入完毕.", "MAIN THREAD", "INFO");
+
+// /* 检查权限 */
+// log.write("开始检查群组权限...", "MAIN THREAD", "INFO");
+// message.getGroupList().forEach(function (item) {
+//     if (message.checkSelfPermission(item.group_id) === false) {
+//         console.log(`Group: ${item.group_id} NO PERMISSION.`);
+//         message.send("group", item.group_id, `[警告] 老人机没有本群的管理权限，以下功能将不会生效：\n1. 文本/图片内容审核: 过滤广告/色情/政治敏感信息\n2. 入群验证: 过滤批量加群的机器人\n3. 退群提示: 在群内广播成员退群信息，拉黑主动退群成员(可选)\n欢迎将我添加至其他群组，以快速获取入群验证、广告过滤、入群欢迎、每日抽签、灵魂鸡汤、智障聊天、正则关键词匹配、QQ炫舞爆点查询等能力`);
+//     } else {
+//         console.log(`Group: ${item.group_id} GRANTED.`);
+//         message.send("group", item.group_id, `老人机已重新载入，以下功能已被更新：\n1. 文本/图片内容审核: 过滤广告/色情/政治敏感信息\n2. 入群验证: 过滤批量加群的机器人\n欢迎将我添加至其他群组，以快速获取入群验证、广告过滤、入群欢迎、每日抽签、灵魂鸡汤、智障聊天、正则关键词匹配、QQ炫舞爆点查询等能力`);
+//     }
+// });

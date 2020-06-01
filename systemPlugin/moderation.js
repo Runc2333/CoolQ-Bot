@@ -77,7 +77,7 @@ function moderation(packet) {
                 var res = request("GET", value.url);
                 var image = res.getBody().toString("base64");
                 imageModeration.image_content_aksk(HUAWEI_CLOUD_APP_KEY, HUAWEI_CLOUD_APP_SECRET, image, "", ["politics", "terrorism", "porn", "ad"], "", function (result) {
-                    console.log(result.result);
+                    // console.log(result.result);
                     if (result.result.suggestion == "block") {
                         const possibleReasons = {
                             ad: "广告内容",
@@ -108,15 +108,20 @@ function moderation(packet) {
 
 function sendResult(traceId, reason, packet) {
     // 检测到违规信息
-    const MORDERATION_NOTIFICATION_GROUP = config.get("GLOBAL", "MORDERATION_NOTIFICATION_GROUP");
-    if (message.revoke(packet.message_id, packet) === true) {
-        log.write("违规信息: 已撤回.", "内容检测结果", "INFO");
-        message.prepare(packet, `您的消息触发了审计规则，已被撤回.\n原始信息已备份至♻️废纸篓(${MORDERATION_NOTIFICATION_GROUP})，您可前往查看详细信息.\nTrace ID: ${traceId}`, true).send();
-    } else {
+    if (message.checkSelfPermission(packet.group_id) === false) {
         log.write("违规信息: 机器人权限不足，无法撤回.", "内容检测结果", "WARNIING");
-        message.prepare(packet, `您的消息触发了审计规则，但机器人无权撤回.\n信息已被转发至♻️废纸篓(${MORDERATION_NOTIFICATION_GROUP})，您可前往查看详细信息.\nTrace ID: ${traceId}`, true).send();
+        message.prepare(packet, `您的消息触发了审计规则，但机器人权限不足，无法撤回.\n请赋予机器人管理员权限或主动处理此条信息.\n信息已被转发至♻️废纸篓(${MORDERATION_NOTIFICATION_GROUP})，若有误判，您可加群后联系管理员反馈，帮助我们改进识别算法.\nTrace ID: ${traceId}`, true).send();
+    } else {
+        const MORDERATION_NOTIFICATION_GROUP = config.get("GLOBAL", "MORDERATION_NOTIFICATION_GROUP");
+        if (message.revoke(packet.message_id, packet) === true) {
+            log.write("违规信息: 已撤回.", "内容检测结果", "INFO");
+            message.prepare(packet, `您的消息触发了审计规则，已被撤回.\n原始信息已备份至♻️废纸篓(${MORDERATION_NOTIFICATION_GROUP})，您可前往查看详细信息.\nTrace ID: ${traceId}`, true).send();
+        } else {
+            log.write("违规信息: 未知原因，撤回失败.", "内容检测结果", "WARNIING");
+            message.prepare(packet, `您的消息触发了审计规则，但撤回失败.\n请主动处理此条信息.\n信息已被转发至♻️废纸篓(${MORDERATION_NOTIFICATION_GROUP})，若有误判，您可加群后联系管理员反馈，帮助我们改进识别算法.\nTrace ID: ${traceId}`, true).send();
+        }
+        message.send("group", MORDERATION_NOTIFICATION_GROUP, `Trace ID: ${traceId}\n发送者：${packet.sender.user_id}\n所在群聊：${packet.group_id}\n违规原因：${reason.join("、")}\n原始信息：\n${packet.message}`);
     }
-    message.send("group", MORDERATION_NOTIFICATION_GROUP, `Trace ID: ${traceId}\n发送者：${packet.sender.user_id}\n所在群聊：${packet.group_id}\n违规原因：${reason.join("、")}\n原始信息：\n${packet.message}`);
 }
 
 module.exports = {
