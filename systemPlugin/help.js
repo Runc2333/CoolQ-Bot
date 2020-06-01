@@ -6,6 +6,16 @@ const log = require(`${processPath}/utils/logger.js`);//日志
 const message = require(`${processPath}/utils/messageApi.js`);//消息接口
 const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
 
+
+config.registerPlugin({
+    type: "message",
+    subType: "groupMessage, discussMessage, privateMessage",
+    script: "../systemPlugin/help.js",
+    handler: "displayReadableHelpInfo",
+    regex: "/帮助/",
+    description: "显示机器人支持的功能~",
+    notification: false
+});
 config.registerSuperCommand({
     command: "help",
     script: "../systemPlugin/help.js",
@@ -63,7 +73,14 @@ function displayPluginInfo(packet) {
     message.prepare(packet, msg, true).send();
 }
 
+function displayReadableHelpInfo(packet) {
+    var msg = "机器人目前支持如下主动触发功能：\n一言 - 获取一句话\n抽签 - 抽取今日运势\n来点色图 - 获取一张色图\nq [模式] [关键词] - QQ炫舞手游爆点查询";
+    message.prepare(packet, msg, true).send();
+    return true;
+}
+
 module.exports = {
     displayHelpInfo,
-    displayPluginInfo
+    displayPluginInfo,
+    displayReadableHelpInfo
 }

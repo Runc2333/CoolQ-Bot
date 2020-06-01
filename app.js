@@ -34,6 +34,7 @@ const BOT_QQNUM = config.get("GLOBAL", "BOT_QQNUM");
 const API_HOST = config.get("GLOBAL", "API_HOST");//WebSocket API Host
 const API_WEBSOCKET_PORT = config.get("GLOBAL", "API_WEBSOCKET_PORT");//WebSocket API Port
 const ACCESS_TOKEN = config.get("GLOBAL", "ACCESS_TOKEN");//WebSocket Access Token
+const GLOBAL_ADMINISTRATORS = config.get("GLOBAL", "GLOBAL_ADMINISTRATORS");//全局管理员
 
 /* 初始化后端WS连接 */
 const bot = new CQWebSocket({
@@ -49,19 +50,26 @@ bot.connect();
 //连接建立事件
 bot.on("ready", function () {
     log.write("到后端服务器的WebSocket连接已成功建立.", "MAIN THREAD", "INFO");
+    // message.getGroupList().forEach(function (item) {
+    //     message.send("group", item.group_id, `后端进程已启动或已被重载.\n机器人服务已恢复可用.`);
+    // });
+    GLOBAL_ADMINISTRATORS.forEach(function (item) {
+        message.send("private", item, "后端进程已启动或已被重载.\n机器人服务已恢复可用.")
+    });
 });
 
 //收到消息
 bot.on("message", function (_CQEvent, packet) {
-    if (packet.sender.user_id == BOT_QQNUM) {
+    if (packet.sender.user_id == BOT_QQNUM || packet.sender.user_id == "2854196310" || packet.sender.user_id == "2854196320" || packet.sender.user_id == "2854196306" || packet.sender.user_id == "2854196312" || packet.sender.user_id == "2854196314" || packet.sender.user_id == "2854196324") {
         return false;
     }
     messageHandler.handle(packet);
+    // console.log(packet);
 });
 
 //收到通知
 bot.on("notice", function (packet) {
-    if (packet.user_id == BOT_QQNUM) {
+    if (packet.user_id == BOT_QQNUM || packet.user_id == "2854196310" || packet.user_id == "2854196320" || packet.user_id == "2854196306" || packet.user_id == "2854196312" || packet.user_id == "2854196314" || packet.user_id == "2854196324") {
         return false;
     }
     noticeHandler.handle(packet);
@@ -73,6 +81,28 @@ bot.on("request", function (packet) {
     requestHandler.handle(packet);
     // console.log(packet);
 })
+
+/* 程序退出事件 */
+process.on("exit", (code) => {
+    message.getGroupList().forEach(function (item) {
+        message.send("group", item.group_id, `后端进程已捕获到终止指令，正在退出.\n机器人服务将暂时不可用.`);
+    });
+    GLOBAL_ADMINISTRATORS.forEach(function (item) {
+        message.send("private", item, `后端进程已捕获到终止指令，正在退出.\n机器人服务将暂时不可用.`);
+    });
+    log.write("正在退出进程...", "进程结束", "INFO");
+});
+
+/* 捕获异常 */
+process.on("uncaughtException", function (err) {
+    console.log(`Caught exception: ${err}`);
+    message.getGroupList().forEach(function (item) {
+        message.send("group", item.group_id, `后端进程在运行中捕获到了一个异常, 请尽快查看日志.错误详情: \n${err}`);
+    });
+    GLOBAL_ADMINISTRATORS.forEach(function (item) {
+        message.send("private", item, `后端进程在运行中捕获到了一个异常, 请尽快查看日志.错误详情: \n${err}`);
+    });
+});
 
 /* 载入插件 */
 log.write("开始载入用户插件...", "MAIN THREAD", "INFO");

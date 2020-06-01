@@ -121,7 +121,7 @@ function prepare(packet, message, at = false) {
     }
 }
 
-function revoke(id) {
+function revoke(id, packet = "fuck") {
     var data = {};
     data.message_id = id;
     var url = `http://${config.get("GLOBAL", "API_HOST")}:${config.get("GLOBAL", "API_HTTP_PORT")}/delete_msg?access_token=${config.get("GLOBAL", "ACCESS_TOKEN")}`;
@@ -140,6 +140,9 @@ function revoke(id) {
         log.write(`消息ID: <${id}>.`, "MESSAGE API] [已撤回消息", "INFO");
     } else {
         console.log(res.getBody("utf8"));
+        if (packet != "fuck") {
+            prepare(packet, `未能撤回消息<${id}>，可能的原因：\n权限不足.`).send();
+        }
         log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [消息撤回失败", "WARNING");
         return false;
     }
@@ -196,6 +199,55 @@ function userinfo(uid) {
     }
 }
 
+function getGroupList() {
+    var url = `http://${config.get("GLOBAL", "API_HOST")}:${config.get("GLOBAL", "API_HTTP_PORT")}/get_group_list?access_token=${config.get("GLOBAL", "ACCESS_TOKEN")}`;
+    var res = request("GET", url);
+    try {
+        var response = JSON.parse(res.getBody("utf8"));
+    } catch (e) {
+        console.log(res.getBody("utf8"));
+        log.write("无法解析服务器返回的数据.", "MESSAGE API] [获取群列表失败", "WARNING");
+        log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [获取群列表失败", "WARNING");
+        return false;
+    }
+    if (response.retcode == 0) {
+        log.write(`已完成所请求的服务.`, "MESSAGE API] [成功获取群列表", "INFO");
+        return response.data;
+    } else {
+        console.log(res.getBody("utf8"));
+        log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [获取群列表失败", "WARNING");
+        return false;
+    }
+}
+
+function mute(gid, uid, time) {
+    var data = {};
+    data.group_id = gid;
+    data.user_id = uid;
+    data.duration = time;
+    var url = `http://${config.get("GLOBAL", "API_HOST")}:${config.get("GLOBAL", "API_HTTP_PORT")}/set_group_ban?access_token=${config.get("GLOBAL", "ACCESS_TOKEN")}`;
+    var res = request("POST", url, {
+        json: data
+    });
+    try {
+        var response = JSON.parse(res.getBody("utf8"));
+    } catch (e) {
+        console.log(res.getBody("utf8"));
+        log.write("无法解析服务器返回的数据.", "MESSAGE API] [设置禁言失败", "WARNING");
+        log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [设置禁言失败", "WARNING");
+        return false;
+    }
+    if (response.retcode == 0) {
+        log.write(`目标用户: <${uid}>`, "MESSAGE API] [成功设置禁言", "INFO");
+        return response.data;
+    } else {
+        console.log(res.getBody("utf8"));
+        send("group", gid, `对用户<${uid}>的禁言操作失败，可能的原因：\n权限不足.`);
+        log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [设置禁言失败", "WARNING");
+        return false;
+    }
+}
+
 function checkPermission(packet) {
     if (packet.sender.role !== "admin" && packet.sender.role !== "owner") {
         var msg = "权限不足.";
@@ -211,5 +263,7 @@ module.exports = {
     revoke,
     kick,
     userinfo,
+    getGroupList,
+    mute,
     checkPermission
 }

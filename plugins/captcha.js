@@ -122,7 +122,6 @@ function captcha(packet) {
 }
 
 function auth(packet) {
-    if (cqcode.decode(packet.message).pureText !== "") {
         // console.log(cqcode.decode(packet.message).pureText);
         var PENDING_CAPTCHA = config.get("CAPTCHA", "PENDING_CAPTCHA");
         for (key in PENDING_CAPTCHA) {
@@ -134,12 +133,19 @@ function auth(packet) {
                     message.prepare(packet, "恭喜您通过了验证！", true).send();
                 } else {
                     // console.log(packet);
-                    // message.revoke(packet.message_id);
-                    message.prepare(packet, `输入的验证码有误, 请再试一次.\n相似度:${(tool.similarity(cqcode.decode(packet.message).pureText.toLowerCase(), PENDING_CAPTCHA[key].text) * 100).toFixed(2)}%\n请发送下图中的验证码，不区分大小写.${cqcode.image(`${PENDING_CAPTCHA[key].image}`)}`, true).send();
+                    message.revoke(packet.message_id, packet);
+                    if (cqcode.decode(packet.message).pureText.length == 6) {
+                        message.prepare(packet, `输入的验证码有误, 请再试一次.\n相似度:${(tool.similarity(cqcode.decode(packet.message).pureText.toLowerCase(), PENDING_CAPTCHA[key].text) * 100).toFixed(2)}%\n请发送下图中的验证码，不区分大小写.${cqcode.image(`${PENDING_CAPTCHA[key].image}`)}`, true).send();
+                    } else {
+                        message.prepare(packet, `请先通过验证后再进行发言.\n请发送下图中的验证码，不区分大小写.${cqcode.image(`${PENDING_CAPTCHA[key].image}`)}`, true).send();
+                    }
                 }
+            } else if (PENDING_CAPTCHA[key].userId != packet.user_id.toString() && PENDING_CAPTCHA[key].group == packet.group_id.toString() && cqcode.decode(packet.message).pureText.toLowerCase() == PENDING_CAPTCHA[key].text) {
+                message.revoke(packet.message_id, packet);
+                message.mute(packet.group_id, packet.sender.user_id, 600);
+                message.prepare(packet, `少他妈在这里给老子捣乱，该干嘛干嘛去。`, true).send();
             }
         }
-    }
 }
 
 function userExit(packet) {

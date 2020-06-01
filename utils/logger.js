@@ -2,6 +2,10 @@
 const processPath = process.cwd().replace(/\\/g, "/");//程序运行路径
 /* 模块 */
 const fs = require("fs");//文件系统读写
+// const message = require(`${processPath}/utils/messageApi.js`);//消息接口
+// const config = require(`${processPath}/utils/configApi.js`);//设置
+
+// const GLOBAL_ADMINISTRATORS = config.get("GLOBAL", "GLOBAL_ADMINISTRATORS");//全局管理员
 
 function write(msg, event, level = "INFO"){
 	var date = new Date();
@@ -25,9 +29,15 @@ function write(msg, event, level = "INFO"){
 			break;
 		case "WARNING":
 			var data = `[${time}] [${level}] [${event}] : ${msg}\n`;
+			// GLOBAL_ADMINISTRATORS.forEach(function (item) {
+			// 	message.send("private", item, `运行过程中抛出了一个警告，详细信息:\n[${time}] [${level}] [${event}] : ${msg}`);
+			// });
 			break;
 		case "ERROR":
 			var data = `[${time}] [${level}] [${event}] : ${msg}\n`;
+			// GLOBAL_ADMINISTRATORS.forEach(function (item) {
+			// 	message.send("private", item, `运行过程中抛出了一个错误，详细信息:\n[${time}] [${level}] [${event}] : ${msg}\n提示:后端进程可能已退出，请及时查看程序状态.`);
+			// });
 			break;
 		default:
 			var data = `[${time}] [${event}] [${level}] : ${msg}\n`;

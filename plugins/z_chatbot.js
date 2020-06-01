@@ -10,8 +10,8 @@ const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
 function init() {
     config.registerPlugin({
         type: "message",
-        subType: "groupMessage, discussMessage",
-        script: "chatbot.js",
+        subType: "groupMessage, discussMessage, privateMessage",
+        script: "z_chatbot.js",
         handler: "chatbot",
         regex: "/./",
         description: "让机器人来陪你聊聊天~",
@@ -19,7 +19,7 @@ function init() {
     });
     config.registerSuperCommand({
         command: "chatbot",
-        script: "chatbot.js",
+        script: "z_chatbot.js",
         handler: "command",
         argument: "[action]",
         description: "聊天机器人插件入口, 以下是参数说明:\n[action]:\nsetapikey [apikey] - 设置插件使用的API KEY.#admin\nalwaysReply [state]:\nenable|disable - 启用或禁用一律回复."
@@ -48,11 +48,6 @@ function chatbot(packet) {
             return false;
         }
     }
-    if (userId == "2821116126") {
-        var msg = "[ChatBot] 拒绝执行.";
-        message.prepare(packet, msg, true).send();
-        return false;
-    }
     var apikey = config.get("CHATBOT", "API_KEY")[packet.group_id];
     if (apikey === undefined) {
         apikey = "xiaosi"
@@ -71,7 +66,11 @@ function chatbot(packet) {
         return false;
     }
     var msg = `${response.data.info.text.replace(/小思/g, "老人机")}`;
-    message.prepare(packet, msg, true).send();
+    if (packet.message_type === "group") {
+        message.prepare(packet, `${msg}`, true).send();
+    } else {
+        message.prepare(packet, `${msg}\n\n提示：这是未匹配到任何功能时的默认聊天回复，如若要查看机器人支持的功能，请发送"帮助".`).send();
+    }
 }
 
 function command(packet) {
@@ -88,7 +87,7 @@ function command(packet) {
                 message.prepare(packet, msg, true).send();
                 return false;
             }
-            message.revoke(packet.message_id);
+            message.revoke(packet.message_id, packet);
             var apikeyConfig = config.get("CHATBOT", "API_KEY");
             var APIKey = options[2];
             apikeyConfig[packet.group_id] = APIKey;

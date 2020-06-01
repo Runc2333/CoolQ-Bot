@@ -72,7 +72,12 @@ function command(packet) {
             welcomeStrings[packet.group_id.toString()] = welcomeString;
             break;
         case "display":
-
+            var welcomeString = config.get("WELCOME", "GROUP_WELCOME_STRINGS")[packet.group_id.toString()];
+            if (typeof (welcomeString) === "undefined") {
+                message.prepare(packet, `本群目前未设置任何入群欢迎语.\n使用命令"/welcome set [string]"来设置入群欢迎语.`, true).send();
+                return false;
+            }
+            message.prepare(packet, `本群目前设置的入群欢迎语如下：\n${welcomeString}`, true).send();
             break;
         default:
             log.write("处理失败:未知指令.", "WELCOME", "WARNING");

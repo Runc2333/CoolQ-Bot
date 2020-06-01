@@ -48,7 +48,9 @@ function handle(packet) {
                     if (registeredPlugins[key].notification !== false) {
                         log.write(`重定向到${registeredPlugins[key].script}处理`, "MessageHandler", "INFO");
                     }
-                    require(`${processPath}/plugins/${registeredPlugins[key].script}`)[registeredPlugins[key].handler](packet);//把请求转发给注册的插件处理
+                    if (require(`${processPath}/plugins/${registeredPlugins[key].script}`)[registeredPlugins[key].handler](packet) === true) {
+                        return false;
+                    }//把请求转发给注册的插件处理
                 }
             }
         } else {
@@ -58,7 +60,9 @@ function handle(packet) {
                 if (registeredPlugins[key].notification !== false) {
                     log.write(`重定向到${registeredPlugins[key].script}处理`, "MessageHandler", "INFO");
                 }
-                require(`${processPath}/plugins/${registeredPlugins[key].script}`)[registeredPlugins[key].handler](packet);//把请求转发给注册的插件处理
+                if (require(`${processPath}/plugins/${registeredPlugins[key].script}`)[registeredPlugins[key].handler](packet) === true) {
+                    return false;
+                }//把请求转发给注册的插件处理
             }
         }
     }

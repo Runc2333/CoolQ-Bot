@@ -31,6 +31,7 @@ function hitokoto(packet) {
     }
     var msg = `${response.hitokoto} ——${response.from}`;
     message.prepare(packet, msg, true).send();
+    return true;
 }
 
 module.exports = {

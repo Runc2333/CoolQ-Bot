@@ -34,6 +34,7 @@ function greeting(packet) {
     var greeting = config.get("GREETING", "GREETING_STRING");
     var msg = `${greeting[parseInt(Math.random() * greeting.length, 10)]}`;
     message.prepare(packet, msg, true).send();
+    return true;
 }
 
 function command(packet) {

@@ -10,9 +10,25 @@ function handle(packet) {
     switch (packet.notice_type) {
         case "group_upload"://群文件
             var noticeType = "GROUP_UPLOAD";
+            // 在群内发送通知
+            var userinfo = message.userinfo(packet.user_id);
+            essage.prepare(packet, `<${userinfo.nickname}>上传了学习资料[${packet.file.name}].`, false).send();
+
             break;
         case "group_admin"://管理员
             var noticeType = "GROUP_ADMIN";
+            switch (packet.sub_type) {
+                case "set":
+                    var userinfo = message.userinfo(packet.user_id);
+                    message.prepare(packet, `<${userinfo.nickname}>已通过和群主PY成为了管理员.`, false).send();
+                    break;
+                case "unset":
+                    var userinfo = message.userinfo(packet.user_id);
+                    message.prepare(packet, `<${userinfo.nickname}>因PY过度，不再受宠.`, false).send();
+                    break;
+                default:
+                    break;
+            }
             break;
         case "group_increase"://进群
             var noticeType = "GROUP_INCREASE";
@@ -35,9 +51,24 @@ function handle(packet) {
             break;
         case "group_ban"://禁言
             var noticeType = "GROUP_BAN";
+            switch (packet.sub_type) {
+                case "ban":
+                    var operatorinfo = message.userinfo(packet.operator_id);
+                    var userinfo = message.userinfo(packet.user_id);
+                    message.prepare(packet, `<${operatorinfo.nickname}>已经给<${userinfo.nickname}>戴上了时长为${packet.duration}秒的口球.`, false).send();
+                    break;
+                case "lift_ban":
+                    var operatorinfo = message.userinfo(packet.operator_id);
+                    var userinfo = message.userinfo(packet.user_id);
+                    message.prepare(packet, `<${userinfo.nickname}>的口球已被<${operatorinfo.nickname}>摘下.`, false).send();
+                    break;
+                default:
+                    break;
+            }
             break;
         case "friend_add"://新好友
             var noticeType = "FRIEND_ADD";
+            message.prepare(packet, `你好~欢迎和老人机成为好友~!!`, false).send();
             break;
         default:
             log.write("遇到了未定义的事件.", "NoticeHandler", "WARNING");
