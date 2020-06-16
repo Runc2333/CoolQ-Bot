@@ -20,11 +20,11 @@ function handle(packet) {
             switch (packet.sub_type) {
                 case "set":
                     var userinfo = message.userinfo(packet.user_id);
-                    message.prepare(packet, `<${userinfo.nickname}>已通过和群主PY成为了管理员.`, false).send();
+                    message.prepare(packet, `<${userinfo.nickname}>已成功上位.`, false).send();
                     break;
                 case "unset":
                     var userinfo = message.userinfo(packet.user_id);
-                    message.prepare(packet, `<${userinfo.nickname}>因PY过度，不再受宠.`, false).send();
+                    message.prepare(packet, `<${userinfo.nickname}>已被罢免.`, false).send();
                     break;
                 default:
                     break;

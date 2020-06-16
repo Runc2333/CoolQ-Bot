@@ -78,7 +78,7 @@ function displayPluginInfo(packet) {
 }
 
 function displayReadableHelpInfo(packet) {
-    var msg = "机器人目前支持如下主动触发功能：\n一言 - 获取一句话\n抽签 - 抽取今日运势\n来点色图 - 获取一张色图\nq [模式] [关键词] - QQ炫舞手游爆点查询";
+    var msg = "机器人目前支持如下主动触发功能：\n一言 - 获取一句话\n抽签 - 抽取今日运势\n来点色图 - 获取一张色图\nQQ炫舞手游爆点查询 - 说明: https://sharechain.qq.com/c9d87dca6f6024c1264db7f8ca44e246";
     message.prepare(packet, msg, true).send();
     return true;
 }

@@ -24,14 +24,22 @@ function init() {
     });
     if (config.get("GREETING") === false) {
         var data = {};
-        data["GREETING_STRING"] = ["我在", "在", "欸", "在呢", "什么事？", "一直都在"];
+        data["GREETING_STRING"] = {
+            "default": ["我在", "在", "欸", "在呢"]
+        };
         config.write("GREETING", data);
         log.write("未在配置文件内找到插件配置, 已自动生成默认配置.", "GREETING", "INFO");
     }
 }
 
 function greeting(packet) {
-    var greeting = config.get("GREETING", "GREETING_STRING");
+    var GREETING_STRING = config.get("GREETING", "GREETING_STRING");
+    var greeting = GREETING_STRING.default;
+    if (packet.message_type == "group") {
+        if (typeof (GREETING_STRING[packet.group_id.toString()]) !== "undefined") {
+            greeting = GREETING_STRING.default.concat(GREETING_STRING[packet.group_id.toString()]);
+        }
+    }
     var msg = `${greeting[parseInt(Math.random() * greeting.length, 10)]}`;
     message.prepare(packet, msg, true).send();
     return true;
@@ -46,9 +54,12 @@ function command(packet) {
                 return false;
             }
             var GREETING_STRING = config.get("GREETING", "GREETING_STRING");
-            var index = GREETING_STRING.indexOf(options[2].toString());
+            if (typeof (GREETING_STRING[packet.group_id.toString()]) === "undefined") {
+                GREETING_STRING[packet.group_id.toString()] = [];
+            }
+            var index = GREETING_STRING[packet.group_id.toString()].indexOf(options[2].toString());
             if (index === -1) {
-                GREETING_STRING.push(options[2].toString());
+                GREETING_STRING[packet.group_id.toString()].push(options[2].toString());
                 config.write("GREETING", GREETING_STRING, "GREETING_STRING");
                 var msg = "[Greeting] 已添加问候语.";
             } else {
@@ -62,19 +73,26 @@ function command(packet) {
                 return false;
             }
             var GREETING_STRING = config.get("GREETING", "GREETING_STRING");
-            var index = GREETING_STRING.indexOf(options[2].toString());
+            if (typeof (GREETING_STRING[packet.group_id.toString()]) === "undefined") {
+                GREETING_STRING[packet.group_id.toString()] = [];
+            }
+            var index = GREETING_STRING[packet.group_id.toString()].indexOf(options[2].toString());
             if (index !== -1) {
-                GREETING_STRING.splice(index, 1);
+                GREETING_STRING[packet.group_id.toString()].splice(index, 1);
                 config.write("GREETING", GREETING_STRING, "GREETING_STRING");
                 var msg = "[Greeting] 已移除问候语.";
             } else {
-                var msg = "[Greeting] 要移除的问候语不存在.";
+                var msg = "[Greeting] 要移除的问候语不存在.\n如若您正在尝试移除的是一条默认问候语，则也会返回这个错误.";
             }
             message.prepare(packet, msg, true).send();
             break;
         case "display":
             var GREETING_STRING = config.get("GREETING", "GREETING_STRING");
-            var msg = `[Greeting] 以下是目前注册到Greeting插件的所有问候语:\n\n${GREETING_STRING.toString()}`;
+            var greeting = GREETING_STRING.default;
+            if (typeof (GREETING_STRING[packet.group_id.toString()]) !== "undefined") {
+                greeting = GREETING_STRING.default.concat(GREETING_STRING[packet.group_id.toString()]);
+            }
+            var msg = `[Greeting] 以下是目前注册到Greeting插件的所有问候语:\n${greeting.toString()}`;
             message.prepare(packet, msg, true).send();
             break;
         default:

@@ -173,9 +173,17 @@ function decode(text) {
                     });
                     break;
                 case "hb":
+                    var title = value.match(/(?<=,title=).+?(?=[\],])/);
                     CQObjects.push({
                         type: "hb",
-                        // title: value.match(/(?<=,title=).+?(?=[\],])/)[0],
+                        "title": title === null ? false : title[0],
+                    });
+                    break;
+                case "show":
+                    CQObjects.push({
+                        type: "hb",
+                        "id": id === null ? false : id[0],
+                        "qq": qq === null ? false : qq[0],
                     });
                     break;
                 default:

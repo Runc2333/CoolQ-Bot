@@ -25,7 +25,7 @@ log.write("**********************************************", "MAIN THREAD", "INFO
 
 /* 系统插件 */
 log.write("开始载入系统插件...", "MAIN THREAD", "INFO");
-require(`${processPath}/systemPlugin/moderation.js`);
+// require(`${processPath}/systemPlugin/moderation.js`);
 require(`${processPath}/systemPlugin/help.js`);
 require(`${processPath}/systemPlugin/pluginSwitch.js`);
 log.write("系统插件载入完毕.", "MAIN THREAD", "INFO");
@@ -61,7 +61,7 @@ bot.on("ready", function () {
 
 //收到消息
 bot.on("message", function (_CQEvent, packet) {
-    if (packet.sender.user_id == BOT_QQNUM || packet.sender.user_id == "2854196310" || packet.sender.user_id == "2854196320" || packet.sender.user_id == "2854196306" || packet.sender.user_id == "2854196312" || packet.sender.user_id == "2854196314" || packet.sender.user_id == "2854196324") {
+    if (packet.sender.user_id == BOT_QQNUM || packet.sender.user_id == "2854196310" || packet.sender.user_id == "2854196320" || packet.sender.user_id == "2854196306" || packet.sender.user_id == "2854196312" || packet.sender.user_id == "2854196314" || packet.sender.user_id == "2854196324" || packet.sender.user_id == "1648312960") {
         return false;
     }
     messageHandler.handle(packet);
@@ -70,7 +70,7 @@ bot.on("message", function (_CQEvent, packet) {
 
 //收到通知
 bot.on("notice", function (packet) {
-    if (packet.user_id == BOT_QQNUM || packet.user_id == "2854196310" || packet.user_id == "2854196320" || packet.user_id == "2854196306" || packet.user_id == "2854196312" || packet.user_id == "2854196314" || packet.user_id == "2854196324") {
+    if (packet.user_id == BOT_QQNUM || packet.user_id == "2854196310" || packet.user_id == "2854196320" || packet.user_id == "2854196306" || packet.user_id == "2854196312" || packet.user_id == "2854196314" || packet.user_id == "2854196324" || packet.user_id == "1648312960") {
         return false;
     }
     noticeHandler.handle(packet);
@@ -125,9 +125,11 @@ log.write("用户插件载入完毕.", "MAIN THREAD", "INFO");
 // message.getGroupList().forEach(function (item) {
 //     if (message.checkSelfPermission(item.group_id) === false) {
 //         console.log(`Group: ${item.group_id} NO PERMISSION.`);
-//         message.send("group", item.group_id, `[警告] 老人机没有本群的管理权限，以下功能将不会生效：\n1. 文本/图片内容审核: 过滤广告/色情/政治敏感信息\n2. 入群验证: 过滤批量加群的机器人\n3. 退群提示: 在群内广播成员退群信息，拉黑主动退群成员(可选)\n欢迎将我添加至其他群组，以快速获取入群验证、广告过滤、入群欢迎、每日抽签、灵魂鸡汤、智障聊天、正则关键词匹配、QQ炫舞爆点查询等能力`);
+//         // message.send("group", item.group_id, `[警告] 老人机没有本群的管理权限，以下功能将不会生效：\n1. 文本/图片内容审核: 过滤广告/色情/政治敏感信息\n2. 入群验证: 过滤批量加群的机器人\n3. 退群提示: 在群内广播成员退群信息，拉黑主动退群成员(可选)\n欢迎将我添加至其他群组，以快速获取入群验证、入群欢迎、广告过滤、每日抽签、灵魂鸡汤、智障聊天、正则关键词匹配、QQ炫舞爆点查询等能力`);
+//         message.send("group", item.group_id, `[警告] 老人机没有本群的管理权限，部分功能可能不会生效.`);
+//         message.send("group", item.group_id, `老人机已重新载入，本次改动如下：\n1、修正Greeting(问候语)插件会混合多个群组数据的问题.\n2、修正Keyword(关键词匹配)插件有多条匹配规则时，旧匹配规则会被覆盖的问题.\n3、因图像检测模型不精准，图像检测功能将暂时关闭反馈，但仍会扫描群组内的图像用于提升模型精准度.\nBug反馈、功能定制(免费)联系Runc(814537405).`);
 //     } else {
 //         console.log(`Group: ${item.group_id} GRANTED.`);
-//         message.send("group", item.group_id, `老人机已重新载入，以下功能已被更新：\n1. 文本/图片内容审核: 过滤广告/色情/政治敏感信息\n2. 入群验证: 过滤批量加群的机器人\n欢迎将我添加至其他群组，以快速获取入群验证、广告过滤、入群欢迎、每日抽签、灵魂鸡汤、智障聊天、正则关键词匹配、QQ炫舞爆点查询等能力`);
+//         message.send("group", item.group_id, `老人机已重新载入，本次改动如下：\n1、修正Greeting(问候语)插件会混合多个群组数据的问题.\n2、修正Keyword(关键词匹配)插件有多条匹配规则时，旧匹配规则会被覆盖的问题.\n3、因图像检测模型不精准，图像检测功能将暂时关闭反馈，但仍会扫描群组内的图像用于提升模型精准度.\nBug反馈、功能定制(免费)联系Runc(814537405).`);
 //     }
 // });

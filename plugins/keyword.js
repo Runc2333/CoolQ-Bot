@@ -83,7 +83,9 @@ function command(packet) {
                 return false;
             }
             var GROUPS_CONFIGURATIONS = config.get("KEYWORD", "GROUPS_CONFIGURATIONS");
-            GROUPS_CONFIGURATIONS[packet.group_id.toString()] = {};
+            if (typeof (GROUPS_CONFIGURATIONS[packet.group_id.toString()]) === "undefined") {
+                GROUPS_CONFIGURATIONS[packet.group_id.toString()] = {};
+            }
             GROUPS_CONFIGURATIONS[packet.group_id.toString()][regex] = regexMessage;
             config.write("KEYWORD", GROUPS_CONFIGURATIONS, "GROUPS_CONFIGURATIONS");
             var msg = "[Keyword] 已成功注册.";
@@ -129,7 +131,7 @@ function command(packet) {
             for (regex in GROUP_CONFIGURATION) {
                 msg += `${regex}\n`;
                 msg += `${GROUP_CONFIGURATION[regex]}\n\n`;
-            }
+            } 
             message.prepare(packet, msg, true).send();
             break;
         default:
