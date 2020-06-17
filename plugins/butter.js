@@ -14,7 +14,7 @@ function init() {
         script: "butter.js",
         handler: "butter",
         regex: "/(^来点色图$)/",
-        description: "看涩图吗大兄弟"
+        description: "随机发送一张涩图"
     });
 }
 

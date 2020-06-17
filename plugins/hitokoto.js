@@ -14,7 +14,7 @@ function init() {
         script: "hitokoto.js",
         handler: "hitokoto",
         regex: "/(^一言|一言$|hitokoto)/",
-        description: "获取一句话~"
+        description: "获取一句话"
     });
 }
 

@@ -18,11 +18,24 @@ function init() {
         notification: false
     });
     config.registerSuperCommand({
-        command: "chatbot",
+        command: "设置密钥",
         script: "z_chatbot.js",
-        handler: "command",
-        argument: "[action]",
-        description: "聊天机器人插件入口, 以下是参数说明:\n[action]:\nsetapikey [apikey] - 设置插件使用的API KEY.#admin\nalwaysReply [state]:\nenable|disable - 启用或禁用一律回复."
+        handler: "setapikey",
+        argument: "[密钥]",
+        requirePermission: true,
+        description: "设置聊天机器人所使用的密钥(API KEY)，可在https://console.ownthink.com/login注册后获取.\n使用示例：#设置密钥 hitynga16d12tuowphz9f4tqvjdpzexn"
+    });
+    config.registerSuperCommand({
+        command: "启用一律回复",
+        script: "z_chatbot.js",
+        handler: "enableAlwaysReply",
+        description: "启用一律回复功能，启用后，机器人将会回复你说的每一句话.\n使用示例：#启用一律回复"
+    });
+    config.registerSuperCommand({
+        command: "禁用一律回复",
+        script: "z_chatbot.js",
+        handler: "disalbeAlwaysReply",
+        description: "禁用一律回复功能，禁用后，和机器人聊天将需要使用唤醒词.\n使用示例：#禁用一律回复"
     });
     if (config.get("CHATBOT") === false) {
         var data = {};
@@ -77,81 +90,60 @@ function chatbot(packet) {
     }
 }
 
-function command(packet) {
-    var options = cqcode.decode(packet.message).pureText.split(" ");
-    switch (options[1]) {
-        case "setapikey":
-            /* 检查权限 */
-            if (message.checkPermission(packet) === false) {
-                return false;
-            }
-            /* 检查必须参数 */
-            if (typeof (options[2]) === "undefined") {
-                var msg = "[ChatBot] 请提供要设置的API KEY.";
-                message.prepare(packet, msg, true).send();
-                return false;
-            }
-            message.revoke(packet.message_id, packet);
-            var apikeyConfig = config.get("CHATBOT", "API_KEY");
-            var APIKey = options[2];
-            apikeyConfig[packet.group_id] = APIKey;
-            config.write("CHATBOT", apikeyConfig, "API_KEY");
-            var msg = "[ChatBot] 已设定API KEY.";
-            message.prepare(packet, msg, true).send();
-            break;
-        case "alwaysReply":
-            var userId = packet.sender.user_id;
-            if (userId == "2821116126") {
-                var msg = "[ChatBot] 拒绝执行.";
-                message.prepare(packet, msg, true).send();
-                return false;
-            }
-            switch (options[2]) {
-                case "enable":
-                    var ALWAYS_REPLY = config.get("CHATBOT", "ALWAYS_REPLY");
-                    var index = ALWAYS_REPLY.indexOf(userId.toString());//判断是否已经禁用
-                    if (index !== -1) {
-                        //处于启用状态
-                        var msg = "[ChatBot] 已经是启用状态了, 无需重复启用.";
-                    } else {
-                        //处于禁用状态
-                        ALWAYS_REPLY.push(userId.toString());
-                        config.write("CHATBOT", ALWAYS_REPLY, "ALWAYS_REPLY");
-                        var msg = "[ChatBot] 成功启用一律回复功能, 现在开始, 机器人将回复你说的每一句话.";
-                    }
-                    message.prepare(packet, msg, true).send();
-                    break;
-                case "disable":
-                    var ALWAYS_REPLY = config.get("CHATBOT", "ALWAYS_REPLY");
-                    var index = ALWAYS_REPLY.indexOf(userId.toString());//判断是否已经禁用
-                    if (index !== -1) {
-                        //处于启用状态
-                        ALWAYS_REPLY.splice(index, 1);
-                        config.write("CHATBOT", ALWAYS_REPLY, "ALWAYS_REPLY");
-                        var msg = "[ChatBot] 成功禁用一律回复功能, 现在开始, 与机器人聊天将需要使用唤醒词.";
-                    } else {
-                        //处于禁用状态
-                        var msg = "[ChatBot] 已经是禁用状态了, 无需重复禁用.";
-                    }
-                    message.prepare(packet, msg, true).send();
-                    break;
-                default:
-                    log.write("处理失败:未知指令.", "CHATBOT", "WARNING");
-                    var msg = "[ChatBot] 未知指令.";
-                    message.prepare(packet, msg, true).send();
-                    return false;
-            }
-            break;
-        default:
-            log.write("处理失败:未知指令.", "CHATBOT", "WARNING");
-            var msg = "[ChatBot] 未知指令.";
-            message.prepare(packet, msg, true).send();
-            return false;
+function setapikey(packet) {
+    /* 检查权限 */
+    if (message.checkPermission(packet) === false) {
+        return false;
     }
+    var APIKey = cqcode.decode(packet.message).pureText.replace(/^#设置密钥 */, "");
+    /* 检查必须参数 */
+    if (typeof (APIKey) === "undefined") {
+        var msg = "[ChatBot] 请提供要设置的API KEY.";
+        message.prepare(packet, msg, true).send();
+        return false;
+    }
+    message.revoke(packet.message_id, packet);
+    var apikeyConfig = config.get("CHATBOT", "API_KEY");
+    apikeyConfig[packet.group_id] = APIKey;
+    config.write("CHATBOT", apikeyConfig, "API_KEY");
+    var msg = "[ChatBot] 已设定API KEY.";
+    message.prepare(packet, msg, true).send();
+}
+
+function enableAlwaysReply(packet) {
+    var ALWAYS_REPLY = config.get("CHATBOT", "ALWAYS_REPLY");
+    var index = ALWAYS_REPLY.indexOf(userId.toString());//判断是否已经禁用
+    if (index !== -1) {
+        //处于启用状态
+        var msg = "[ChatBot] 已经是启用状态了, 无需重复启用.";
+    } else {
+        //处于禁用状态
+        ALWAYS_REPLY.push(userId.toString());
+        config.write("CHATBOT", ALWAYS_REPLY, "ALWAYS_REPLY");
+        var msg = "[ChatBot] 成功启用一律回复功能, 现在开始, 机器人将回复你说的每一句话.";
+    }
+    message.prepare(packet, msg, true).send();
+}
+
+function disalbeAlwaysReply(packet) {
+    var ALWAYS_REPLY = config.get("CHATBOT", "ALWAYS_REPLY");
+    var index = ALWAYS_REPLY.indexOf(userId.toString());//判断是否已经禁用
+    if (index !== -1) {
+        //处于启用状态
+        ALWAYS_REPLY.splice(index, 1);
+        config.write("CHATBOT", ALWAYS_REPLY, "ALWAYS_REPLY");
+        var msg = "[ChatBot] 成功禁用一律回复功能, 现在开始, 与机器人聊天将需要使用唤醒词.";
+    } else {
+        //处于禁用状态
+        var msg = "[ChatBot] 已经是禁用状态了, 无需重复禁用.";
+    }
+    message.prepare(packet, msg, true).send();
 }
 
 module.exports = {
     init,
     chatbot,
-    command
+    setapikey,
+    enableAlwaysReply,
+    disalbeAlwaysReply
 }

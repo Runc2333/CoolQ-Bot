@@ -202,6 +202,7 @@ function registerSuperCommand(arguments) {
 	config[arguments.command]["script"] = arguments.script;
 	config[arguments.command]["handler"] = arguments.handler;
 	config[arguments.command]["argument"] = typeof (arguments.argument) !== "undefined" ? arguments.argument : "";
+	config[arguments.command]["requirePermission"] = arguments.requirePermission === true ? true : false;
 	config[arguments.command]["description"] = typeof (arguments.description) !== "undefined" ? arguments.description : "";
 	write("GLOBAL", config, "SUPER_COMMAND_REGISTRY");
 	if (!arguments.skip) {

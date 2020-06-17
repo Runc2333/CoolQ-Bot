@@ -14,7 +14,7 @@ function init() {
         script: "divination.js",
         handler: "divination",
         regex: "/(^占卜|占卜$|^抽签|抽签$)/",
-        description: "抽签吗大兄弟"
+        description: "抽一张签"
     });
 }
 

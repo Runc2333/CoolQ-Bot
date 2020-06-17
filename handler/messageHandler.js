@@ -16,7 +16,7 @@ function handle(packet) {
         case "group":
             log.write(`<${packet.group_id}> - <${packet.sender.nickname}>: ${packet.message}.`, "收到群组消息", "INFO");
             /* 判断是否交给SuperCommandHandler处理 */
-            if (/^\//.test(cqcode.decode(packet.message).pureText)) {
+            if (/^#/.test(cqcode.decode(packet.message).pureText)) {
                 log.write("重定向到superCommand.js处理.", "MAIN THREAD", "INFO");
                 superCommandHandler.handle(packet);
                 return true;//中断处理
