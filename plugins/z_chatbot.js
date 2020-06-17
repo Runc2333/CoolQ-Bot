@@ -111,6 +111,7 @@ function setapikey(packet) {
 }
 
 function enableAlwaysReply(packet) {
+    var userId = packet.sender.user_id;
     var ALWAYS_REPLY = config.get("CHATBOT", "ALWAYS_REPLY");
     var index = ALWAYS_REPLY.indexOf(userId.toString());//判断是否已经禁用
     if (index !== -1) {
@@ -126,6 +127,7 @@ function enableAlwaysReply(packet) {
 }
 
 function disalbeAlwaysReply(packet) {
+    var userId = packet.sender.user_id;
     var ALWAYS_REPLY = config.get("CHATBOT", "ALWAYS_REPLY");
     var index = ALWAYS_REPLY.indexOf(userId.toString());//判断是否已经禁用
     if (index !== -1) {

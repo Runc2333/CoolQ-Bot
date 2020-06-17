@@ -56,106 +56,122 @@ function init() {
 }
 
 function listener(packet) {
-    // //获取机器人名字
-    // var BOT_NAME = config.get("GLOBAL", "BOT_NAME");
-    // var BOT_QQNUM = config.get("GLOBAL", "BOT_QQNUM");
-    // if (packet.message_type === "group") {
-    //     var GROUPS_CONFIGURATIONS = config.get("KEYWORD", "GROUPS_CONFIGURATIONS");
-    //     var GROUP_CONFIGURATION = GROUPS_CONFIGURATIONS[packet.group_id.toString()];
-    //     if (typeof (GROUP_CONFIGURATION) === "undefined") {
-    //         return false;
-    //     }
-    //     for (key in GROUP_CONFIGURATION) {
-    //         var regex = eval(key.replace(/\{BOT_NAME\}/g, BOT_NAME).replace(/\{BOT_QQNUM\}/g, BOT_QQNUM));//替换掉正则表达式字符串里的机器人名字 同时转化为正则表达式对象
-    //         if (regex.test(packet.message)) {
-    //             var msg = GROUP_CONFIGURATION[key].replace(/&#91;/g, "[").replace(/&#93;/g, "]");
-    //         }
-    //     }
-    // }
-    // if (typeof (msg) === "undefined") {
-    //     return false;
-    // }
-    // message.prepare(packet, msg, true).send();
+    if (packet.message_type === "group") {
+        var GROUPS_CONFIGURATIONS = config.get("LISTENER", "GROUPS_CONFIGURATIONS");
+        var GROUP_CONFIGURATION = GROUPS_CONFIGURATIONS[packet.group_id.toString()];
+        if (typeof (GROUP_CONFIGURATION) === "undefined") {
+            return false;
+        }
+        var USER_CONFIGURATION = GROUP_CONFIGURATION[packet.sender.user_id];
+        if (typeof (USER_CONFIGURATION) === "undefined") {
+            return false;
+        }
+        for (key in USER_CONFIGURATION) {
+            var target = USER_CONFIGURATION[key];//替换掉正则表达式字符串里的机器人名字 同时转化为正则表达式对象
+            if (packet.message.indexOf(target) !== -1) {
+                let msg = `在群组<${packet.group_id}>触发了关键词<${target}>.\n发送者：<${packet.sender.user_id}>\n原始信息：\n${packet.message}`
+                message.send("private", packet.sender.user_id, msg);
+            }
+        }
+    }
 }
 
 function add(packet) {
-    // /* 检查权限 */
-    // if (message.checkPermission(packet) === false) {
-    //     return false;
-    // }
-    // var options = cqcode.decode(packet.message).pureText.replace(/^#添加问答 */, "").split(" ");
-    // var regex = options.shift();
-    // if (regex === undefined) {
-    //     var msg = "[Keyword] 请提供一个问题.";
-    //     message.prepare(packet, msg, true).send();
-    //     return false;
-    // }
-    // if (/^\/[^\/]+?\/$/.test(regex) === false) {
-    //     regex = `/^${regex.replace("/", "\\/")}$/`
-    // }
-    // var regexMessage = options.join(" ").replace(new RegExp("\r\n", "gm"), "\n");
-    // if (regexMessage == "") {
-    //     var msg = "[Keyword] 请提供问题对应的回答.";
-    //     message.prepare(packet, msg, true).send();
-    //     return false;
-    // }
-    // var GROUPS_CONFIGURATIONS = config.get("KEYWORD", "GROUPS_CONFIGURATIONS");
-    // if (typeof (GROUPS_CONFIGURATIONS[packet.group_id.toString()]) === "undefined") {
-    //     GROUPS_CONFIGURATIONS[packet.group_id.toString()] = {};
-    // }
-    // GROUPS_CONFIGURATIONS[packet.group_id.toString()][regex] = regexMessage;
-    // config.write("KEYWORD", GROUPS_CONFIGURATIONS, "GROUPS_CONFIGURATIONS");
-    // var msg = "[Keyword] 已成功注册指定问答.";
-    // message.prepare(packet, msg, true).send();
+    var keyword = cqcode.decode(packet.message).pureText.replace(/^#添加监听词 */, "")
+    if (keyword === undefined) {
+        var msg = "[Listener] 请提供一个监听词.";
+        message.prepare(packet, msg, true).send();
+        return false;
+    }
+    var GROUPS_CONFIGURATIONS = config.get("LISTENER", "GROUPS_CONFIGURATIONS");
+    if (typeof (GROUPS_CONFIGURATIONS[packet.group_id.toString()]) === "undefined") {
+        GROUPS_CONFIGURATIONS[packet.group_id.toString()] = {};
+    }
+    if (typeof (GROUPS_CONFIGURATIONS[packet.group_id.toString()][packet.sender.user_id]) === "undefined"){
+        GROUPS_CONFIGURATIONS[packet.group_id.toString()][packet.sender.user_id] = [];
+    }
+    GROUPS_CONFIGURATIONS[packet.group_id.toString()][packet.sender.user_id].push(keyword);
+    config.write("LISTENER", GROUPS_CONFIGURATIONS, "GROUPS_CONFIGURATIONS");
+    var msg = "[Listener] 已成功注册监听词，触发监听词的消息将被转发给您.";
+    message.prepare(packet, msg, true).send();
 }
 
 function remove(packet) {
-    // /* 检查权限 */
-    // if (message.checkPermission(packet) === false) {
-    //     return false;
-    // }
-    // var options = cqcode.decode(packet.message).pureText.replace(/^#移除问答 */, "").split(" ");
-    // var regex = options.shift();
-    // if (/^\/[^\/]+?\/$/.test(regex) === false) {
-    //     regex = `/^${regex.replace("/", "\\/")}$/`
-    // }
-    // var GROUPS_CONFIGURATIONS = config.get("KEYWORD", "GROUPS_CONFIGURATIONS");
-    // var GROUP_CONFIGURATION = GROUPS_CONFIGURATIONS[packet.group_id.toString()];
-    // if (typeof (GROUP_CONFIGURATION) === "undefined") {
-    //     var msg = "[Keyword] 该群组未注册任何问答.";
-    //     message.prepare(packet, msg, true).send();
-    //     return false;
-    // }
-    // var pendingDelete = GROUPS_CONFIGURATIONS[packet.group_id.toString()][regex];
-    // if (typeof (pendingDelete) === "undefined") {
-    //     var msg = "[Keyword] 指定的问答不存在.";
-    //     message.prepare(packet, msg, true).send();
-    //     return false;
-    // }
-    // delete GROUPS_CONFIGURATIONS[packet.group_id.toString()][regex];
-    // if (Object.keys(GROUPS_CONFIGURATIONS[packet.group_id.toString()]).length === 0) {
-    //     delete GROUPS_CONFIGURATIONS[packet.group_id.toString()];
-    // }
-    // config.write("KEYWORD", GROUPS_CONFIGURATIONS, "GROUPS_CONFIGURATIONS");
-    // var msg = "[Keyword] 已移除指定的问答.";
-    // message.prepare(packet, msg, true).send();
+    /* 检查权限 */
+    if (message.checkPermission(packet) === false) {
+        return false;
+    }
+    var keyword = cqcode.decode(packet.message).pureText.replace(/^#移除监听词 */, "")
+    var GROUPS_CONFIGURATIONS = config.get("LISTENER", "GROUPS_CONFIGURATIONS");
+    var GROUP_CONFIGURATION = GROUPS_CONFIGURATIONS[packet.group_id.toString()];
+    if (typeof (GROUP_CONFIGURATION) === "undefined") {
+        var msg = "[Listener] 您未注册任何监听词.";
+        message.prepare(packet, msg, true).send();
+        return false;
+    }
+    var USER_CONFIGURATION = GROUP_CONFIGURATION[packet.sender.user_id];
+    if (typeof (USER_CONFIGURATION) === "undefined") {
+        var msg = "[Listener] 您未注册任何监听词.";
+        message.prepare(packet, msg, true).send();
+        return false;
+    }
+    var pendingDeleteIndex = GROUPS_CONFIGURATIONS[packet.group_id.toString()][packet.sender.user_id].indexOf(keyword);
+    if (typeof (pendingDeleteIndex) === -1) {
+        var msg = "[Listener] 指定的监听词不存在.";
+        message.prepare(packet, msg, true).send();
+        return false;
+    }
+    GROUPS_CONFIGURATIONS[packet.group_id.toString()][packet.sender.user_id].splice(pendingDeleteIndex, 1);
+    if (Object.keys(GROUPS_CONFIGURATIONS[packet.group_id.toString()][packet.sender.user_id]).length === 0) {
+        delete GROUPS_CONFIGURATIONS[packet.group_id.toString()][packet.sender.user_id];
+    }
+    if (Object.keys(GROUPS_CONFIGURATIONS[packet.group_id.toString()]).length === 0) {
+        delete GROUPS_CONFIGURATIONS[packet.group_id.toString()];
+    }
+    config.write("LISTENER", GROUPS_CONFIGURATIONS, "GROUPS_CONFIGURATIONS");
+    var msg = "[Listener] 已移除指定的监听词.";
+    message.prepare(packet, msg, true).send();
 }
 
-function display(packet) {
-    // var GROUP_CONFIGURATION = config.get("KEYWORD", "GROUPS_CONFIGURATIONS")[packet.group_id.toString()];
-    // if (typeof (GROUP_CONFIGURATION) === "undefined") {
-    //     var msg = "[Keyword] 该群组未注册任何问答.";
-    //     message.prepare(packet, msg, true).send();
-    //     return false;
-    // }
-    // var msg = "以下是目前注册到插件的所有问答:";
-    // var globalPlaceholder = new Array((msg.length) * 2 + 2).join("-");
-    // msg += `\n${globalPlaceholder}\n\n`;
-    // for (regex in GROUP_CONFIGURATION) {
-    //     msg += `问题：${regex}\n`;
-    //     msg += `回答：${GROUP_CONFIGURATION[regex]}\n\n`;
-    // }
-    // message.prepare(packet, msg, true).send();
+function displayMine(packet) {
+    var GROUP_CONFIGURATION = config.get("LISTENER", "GROUPS_CONFIGURATIONS")[packet.group_id.toString()];
+    if (typeof (GROUP_CONFIGURATION) === "undefined") {
+        var msg = "[Listener] 您未注册任何监听词.";
+        message.prepare(packet, msg, true).send();
+        return false;
+    }
+    var USER_CONFIGURATION = GROUP_CONFIGURATION[packet.sender.user_id];
+    if (typeof (USER_CONFIGURATION) === "undefined") {
+        var msg = "[Listener] 您未注册任何监听词.";
+        message.prepare(packet, msg, true).send();
+        return false;
+    }
+    var msg = "以下是您目前注册的所有监听词:";
+    var globalPlaceholder = new Array((msg.length) * 2 + 2).join("-");
+    msg += `\n${globalPlaceholder}\n\n`;
+    for (key in USER_CONFIGURATION) {
+        msg += `词语：${USER_CONFIGURATION[key]}\n`;
+    }
+    message.prepare(packet, msg, true).send();
+}
+
+function displayAll(packet) {
+    var GROUP_CONFIGURATION = config.get("LISTENER", "GROUPS_CONFIGURATIONS")[packet.group_id.toString()];
+    if (typeof (GROUP_CONFIGURATION) === "undefined") {
+        var msg = "[Listener] 群组内未注册任何监听词.";
+        message.prepare(packet, msg, true).send();
+        return false;
+    }
+    var msg = "以下是群组内目前注册的所有监听词:";
+    var globalPlaceholder = new Array((msg.length) * 2 + 2).join("-");
+    msg += `\n${globalPlaceholder}\n\n`;
+    for (key in GROUP_CONFIGURATION) {
+        msg += `用户<${key}>所注册的关键词: \n`;
+        for (key2 in GROUP_CONFIGURATION[key]) {
+            msg += `词语：${GROUP_CONFIGURATION[key][key2]}\n`;
+        }
+    }
+    message.prepare(packet, msg, true).send();
 }
 
 module.exports = {
@@ -163,5 +179,6 @@ module.exports = {
     listener,
     add,
     remove,
-    display
+    displayMine,
+    displayAll,
 }

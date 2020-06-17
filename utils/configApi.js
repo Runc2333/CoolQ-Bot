@@ -212,7 +212,7 @@ function registerSuperCommand(arguments) {
 			write("GLOBAL", config, "PLUGIN_REGISTRY");
 		}
 	}
-	log.write(`插件<${arguments.script}>已注册命令</${arguments.command}>.`, "CONFIG API", "INFO");
+	log.write(`插件<${arguments.script}>已注册命令<#${arguments.command}>.`, "CONFIG API", "INFO");
 }
 
 function destroyRegistry() {

@@ -35,7 +35,6 @@ function send(type, uid, msg, escape = false) {
     var res = request("POST", url, {
         json: data
     });
-
     try {
         var response = JSON.parse(res.getBody("utf8"));
     } catch (e) {

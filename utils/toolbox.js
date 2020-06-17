@@ -120,8 +120,18 @@ function similarity(x, y) {
     return 1 - (editDistance(x, y) / Math.max(x.length, y.length));
 }
 
+// function escapeRegExp(str) {
+//     var escapeCharacter = ["*", ".", "?", "+", "$", "^", "[", "]", "(", ")", "{", "}", "|", "\\", "/"];
+//     escapeCharacter.forEach((v) => {
+//         str = str.replace(RegExp(`\\${v}`, "g"), `\\${v}`);
+//     });
+//     str = str.replace(RegExp(`\\\\`, "g"), `\\`);
+//     return str;
+// }
+
 module.exports = {
     deepCompare,
     editDistance,
-    similarity
+    similarity,
+    // escapeRegExp
 }
