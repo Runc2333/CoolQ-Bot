@@ -129,9 +129,45 @@ function similarity(x, y) {
 //     return str;
 // }
 
+// array unique function
+function unique(arr) {
+    return Array.from(new Set(arr))
+}
+
+function formatTime(seconds) {
+    var date = new Date(parseFloat(seconds + "000"));
+    return (
+        date.getFullYear()
+        + "-" +
+        ((date.getMonth() + 1) < 10 ? "0" + (date.getMonth() + 1) : (date.getMonth() + 1))
+        + "-" +
+        (date.getDate() < 10 ? "0" + date.getDate() : date.getDate())
+        + " " +
+        (date.getHours() < 10 ? "0" + date.getHours() : date.getHours())
+        + ":" +
+        (date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes())
+        + ":" +
+        (date.getSeconds() < 10 ? "0" + date.getSeconds() : date.getSeconds())
+    ).toString();
+}
+
+function isNum(val) {
+    if (val === "" || val == null) {
+        return false;
+    }
+    if (!isNaN(val)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 module.exports = {
     deepCompare,
     editDistance,
     similarity,
-    // escapeRegExp
+    // escapeRegExp,
+    formatTime,
+    unique,
+    isNum,
 }

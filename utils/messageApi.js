@@ -4,11 +4,15 @@ const processPath = process.cwd().replace(/\\/g, "/");//程序运行路径
 const request = require("sync-request");//同步网络请求
 const log = require(`${processPath}/utils/logger.js`);//日志
 const config = require(`${processPath}/utils/configApi.js`);//设置
+const db = require(`${processPath}/utils/database.js`);//数据库
+
 // const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
 
 function cqat(uin) {
     return `[CQ:at,qq=${uin}]`;
 }
+
+const BOT_QQNUM = config.get("GLOBAL", "BOT_QQNUM");
 
 function send(type, uid, msg, escape = false) {
     var data = {};
@@ -45,6 +49,38 @@ function send(type, uid, msg, escape = false) {
     }
     if (response.retcode == 0) {
         log.write(`送往<${uid}>: <${msg}>.`, "MESSAGE API] [消息已送达", "INFO");
+        switch (type) {
+            case "group":
+                db.saveMessageIntoDatabase({
+                    type: type,
+                    content: msg,
+                    groupId: uid,
+                    userId: BOT_QQNUM,
+                    messageId: response.data.message_id
+                });
+                break;
+            case "discuss":
+                db.saveMessageIntoDatabase({
+                    type: type,
+                    content: msg,
+                    groupId: uid,
+                    userId: BOT_QQNUM,
+                    messageId: response.data.message_id
+                });
+                break;
+            case "private":
+                db.saveMessageIntoDatabase({
+                    type: type,
+                    content: msg,
+                    userId: uid,
+                    sender: BOT_QQNUM,
+                    messageId: response.data.message_id
+                });
+                break;
+            default:
+                log.write("遇到了不支持的消息类型.", "MAIN THREAD", "ERROR");
+                break;
+        }
     } else {
         console.log(res.getBody("utf8"));
         log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [消息发送失败", "WARNING");

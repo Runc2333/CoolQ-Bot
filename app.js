@@ -9,6 +9,7 @@ const log = require(`${processPath}/utils/logger.js`);//日志
 const config = require(`${processPath}/utils/configApi.js`);//设置
 const message = require(`${processPath}/utils/messageApi.js`);//消息接口
 const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
+const db = require(`${processPath}/utils/database.js`);//数据库
 /* 事件处理程序 */
 const messageHandler = require(`${processPath}/handler/messageHandler.js`);
 const noticeHandler = require(`${processPath}/handler/noticeHandler.js`);
@@ -63,6 +64,40 @@ bot.on("ready", function () {
 bot.on("message", function (_CQEvent, packet) {
     if (packet.sender.user_id == BOT_QQNUM || packet.sender.user_id == "2854196310" || packet.sender.user_id == "2854196320" || packet.sender.user_id == "2854196306" || packet.sender.user_id == "2854196312" || packet.sender.user_id == "2854196314" || packet.sender.user_id == "2854196324" || packet.sender.user_id == "1648312960") {
         return false;
+    }
+    if (/^#/.test(cqcode.decode(packet.message).pureText) === false) {
+        switch (packet.message_type) {
+            case "group":
+                db.saveMessageIntoDatabase({
+                    type: packet.message_type,
+                    content: packet.message,
+                    groupId: packet.group_id,
+                    userId: packet.sender.user_id,
+                    messageId: packet.message_id
+                });
+                break;
+            case "discuss":
+                db.saveMessageIntoDatabase({
+                    type: packet.message_type,
+                    content: packet.message,
+                    discussId: packet.group_id,
+                    userId: packet.sender.user_id,
+                    messageId: packet.message_id
+                });
+                break;
+            case "private":
+                db.saveMessageIntoDatabase({
+                    type: packet.message_type,
+                    content: packet.message,
+                    userId: packet.sender.user_id,
+                    sender: packet.sender.user_id,
+                    messageId: packet.message_id
+                });
+                break;
+            default:
+                log.write("遇到了不支持的消息类型.", "MAIN THREAD", "ERROR");
+                break;
+        }
     }
     messageHandler.handle(packet);
     // console.log(packet);
@@ -127,9 +162,9 @@ log.write("用户插件载入完毕.", "MAIN THREAD", "INFO");
 //         console.log(`Group: ${item.group_id} NO PERMISSION.`);
 //         // message.send("group", item.group_id, `[警告] 老人机没有本群的管理权限，以下功能将不会生效：\n1. 文本/图片内容审核: 过滤广告/色情/政治敏感信息\n2. 入群验证: 过滤批量加群的机器人\n3. 退群提示: 在群内广播成员退群信息，拉黑主动退群成员(可选)\n欢迎将我添加至其他群组，以快速获取入群验证、入群欢迎、广告过滤、每日抽签、灵魂鸡汤、智障聊天、正则关键词匹配、QQ炫舞爆点查询等能力`);
 //         message.send("group", item.group_id, `[警告] 老人机没有本群的管理权限，部分功能可能不会生效.`);
-//         message.send("group", item.group_id, `老人机已被更新，本次改动如下：\n1、修复了当老人机拥有管理权限时，会同意所有入群请求的问题。现已暂时修正为不处理入群请求，后续将继续完善此部分功能。\n2、优化了帮助菜单和指令说明，现在的指令均以#开头，可通过发送"#指令帮助"来查看优化后的指令\n3、关键词匹配功能改名为问答功能，支持更为简单的设置方式。\n4、添加入群欢迎功能，可在新成员入群时发送预设的消息(支持换行、图片、表情，不限长度)，详细设置请参阅"#指令帮助"\n5、添加关键词监听功能，可在触发设置的关键词时，将指定的消息私聊转发给您，详细设置请参阅"#指令帮助"。\n6、优化QQ炫舞爆点查询功能的返回值，现在查询爆点时将会返回开头描述\nBug反馈、功能定制(免费)联系Runc(814537405).`);
+//         message.send("group", item.group_id, `老人机已被更新，本次改动如下：\n1、添加了向群成员批量发送私聊信息的功能，方便舞团管理，详细使用说明请参阅"#指令帮助"。\n2、添加了群聊天记录缓存的功能，可通过指令查询群内的历史聊天记录，详细使用说明请参阅"#指令帮助。\n另:S6赛季QQ炫舞手游爆气表的更新将与网页同步，更新时间约为赛季开始后一周内。\nBug反馈、功能定制(免费)联系Runc(814537405).`);
 //     } else {
 //         console.log(`Group: ${item.group_id} GRANTED.`);
-//         message.send("group", item.group_id, `老人机已被更新，本次改动如下：\n1、修复了当老人机拥有管理权限时，会同意所有入群请求的问题。现已暂时修正为不处理入群请求，后续将继续完善此部分功能。\n2、优化了帮助菜单和指令说明，现在的指令均以#开头，可通过发送"#指令帮助"来查看优化后的指令\n3、关键词匹配功能改名为问答功能，支持更为简单的设置方式。\n4、添加入群欢迎功能，可在新成员入群时发送预设的消息(支持换行、图片、表情，不限长度)，详细设置请参阅"#指令帮助"\n5、添加关键词监听功能，可在触发设置的关键词时，将指定的消息私聊转发给您，详细设置请参阅"#指令帮助"。\n6、优化QQ炫舞爆点查询功能的返回值，现在查询爆点时将会返回开头描述\nBug反馈、功能定制(免费)联系Runc(814537405).`);
+//         message.send("group", item.group_id, `老人机已被更新，本次改动如下：\n1、添加了向群成员批量发送私聊信息的功能，方便舞团管理，详细使用说明请参阅"#指令帮助"。\n2、添加了群聊天记录缓存的功能，可通过指令查询群内的历史聊天记录，详细使用说明请参阅"#指令帮助"。\n另:S6赛季QQ炫舞手游爆气表的更新将与网页同步，更新时间约为赛季开始后一周内。\nBug反馈、功能定制(免费)联系Runc(814537405).`);
 //     }
 // });

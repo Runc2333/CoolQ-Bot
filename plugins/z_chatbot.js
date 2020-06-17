@@ -2,6 +2,7 @@
 const processPath = process.cwd().replace(/\\/g, "/");//程序运行路径
 /* 模块 */
 const request = require("sync-request");//同步网络请求
+const async_request = require('request');
 const config = require(`${processPath}/utils/configApi.js`);//设置
 const log = require(`${processPath}/utils/logger.js`);//日志
 const message = require(`${processPath}/utils/messageApi.js`);//消息接口
@@ -72,22 +73,39 @@ function chatbot(packet) {
         return false;
     }
     var url = encodeURI(`https://api.ownthink.com/bot?appid=${apikey}&spoken=${spoken}&userid=${packet.sender.user_id}`);
-    // console.log(url);
-    var res = request("GET", url);
-    try {
-        var response = JSON.parse(res.getBody("utf8"));
-    } catch (e) {
-        console.log(res.getBody("utf8"));
-        log.write("无法解析服务器返回的数据.", "HITOKOTO", "WARNING");
-        log.write("请检查后端服务器是否工作正常.", "HITOKOTO", "WARNING");
-        return false;
-    }
-    var msg = `${response.data.info.text.replace(/小思/g, "老人机")}`;
-    if (packet.message_type === "group") {
-        message.prepare(packet, `${msg}`, true).send();
-    } else {
-        message.prepare(packet, `${msg}\n\n提示：这是未匹配到任何功能时的默认聊天回复，如若要查看机器人支持的功能，请发送"帮助".`).send();
-    }
+    // async method
+    async_request(url, function (_error, _response, body) {
+        try {
+            var response = JSON.parse(body);
+        } catch (e) {
+            console.log(response);
+            log.write("无法解析服务器返回的数据.", "CHATBOT", "WARNING");
+            log.write("请检查后端服务器是否工作正常.", "CHATBOT", "WARNING");
+            return false;
+        }
+        var msg = `${response.data.info.text.replace(/小思/g, "老人机")}`;
+        if (packet.message_type === "group") {
+            message.prepare(packet, `${msg}\n\n提示：这是未匹配到任何功能时的默认聊天回复，如若要查看机器人支持的功能，请发送"帮助".`, true).send();
+        } else {
+            message.prepare(packet, `${msg}\n\n提示：这是未匹配到任何功能时的默认聊天回复，如若要查看机器人支持的功能，请发送"帮助".`).send();
+        }
+    });
+    // sync method
+    // var res = request("GET", url);
+    // try {
+    //     var response = JSON.parse(res.getBody("utf8"));
+    // } catch (e) {
+    //     console.log(res.getBody("utf8"));
+    //     log.write("无法解析服务器返回的数据.", "HITOKOTO", "WARNING");
+    //     log.write("请检查后端服务器是否工作正常.", "HITOKOTO", "WARNING");
+    //     return false;
+    // }
+    // var msg = `${response.data.info.text.replace(/小思/g, "老人机")}`;
+    // if (packet.message_type === "group") {
+    //     message.prepare(packet, `${msg}`, true).send();
+    // } else {
+    //     message.prepare(packet, `${msg}\n\n提示：这是未匹配到任何功能时的默认聊天回复，如若要查看机器人支持的功能，请发送"帮助".`).send();
+    // }
 }
 
 function setapikey(packet) {

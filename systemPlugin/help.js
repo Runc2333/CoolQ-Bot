@@ -6,13 +6,20 @@ const log = require(`${processPath}/utils/logger.js`);//日志
 const message = require(`${processPath}/utils/messageApi.js`);//消息接口
 const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
 
-
+config.registerPlugin({
+    type: "message",
+    subType: "privateMessage",
+    script: "../systemPlugin/help.js",
+    handler: "saySorry",
+    regex: "/^#指令帮助$/",
+    skip: true
+});
 config.registerPlugin({
     type: "message",
     subType: "groupMessage, discussMessage, privateMessage",
     script: "../systemPlugin/help.js",
     handler: "displayReadableHelpInfo",
-    regex: "/^(帮助|教程|说明|机器人说明|机器人帮助|机器人教程)$/",
+    regex: "/(帮助|教程|说明|菜单|机器人菜单|机器人说明|机器人帮助|机器人教程)/",
     description: "显示机器人支持的功能~",
     notification: false,
     skip: true
@@ -33,6 +40,12 @@ config.registerSuperCommand({
     description: "显示注册到系统的插件.",
     skip: true
 });
+
+function saySorry(packet) {
+    msg = "抱歉，老人机目前在私聊状态下没有任何可配置项目.\n您可将我拉入一个群聊来体验我的全部功能.";
+    message.prepare(packet, msg, true).send();
+    return true;
+}
 
 function displayHelpInfo(packet) {
     if (packet.sender.role !== "admin" && packet.sender.role !== "owner") {
@@ -87,6 +100,7 @@ function displayReadableHelpInfo(packet) {
 }
 
 module.exports = {
+    saySorry,
     displayHelpInfo,
     displayPluginInfo,
     displayReadableHelpInfo

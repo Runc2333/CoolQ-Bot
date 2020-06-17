@@ -62,15 +62,12 @@ function listener(packet) {
         if (typeof (GROUP_CONFIGURATION) === "undefined") {
             return false;
         }
-        var USER_CONFIGURATION = GROUP_CONFIGURATION[packet.sender.user_id];
-        if (typeof (USER_CONFIGURATION) === "undefined") {
-            return false;
-        }
-        for (key in USER_CONFIGURATION) {
-            var target = USER_CONFIGURATION[key];//替换掉正则表达式字符串里的机器人名字 同时转化为正则表达式对象
-            if (packet.message.indexOf(target) !== -1) {
-                let msg = `在群组<${packet.group_id}>触发了关键词<${target}>.\n发送者：<${packet.sender.user_id}>\n原始信息：\n${packet.message}`
-                message.send("private", packet.sender.user_id, msg);
+        for (key in GROUP_CONFIGURATION) {
+            for (key2 in GROUP_CONFIGURATION[key]) {
+                if (packet.message.indexOf(GROUP_CONFIGURATION[key][key2]) !== -1) {
+                    let msg = `在群组<${packet.group_id}>触发了关键词<${GROUP_CONFIGURATION[key][key2]}>.\n发送者：<${packet.sender.user_id}>\n原始信息：\n${packet.message}`
+                    message.send("private", key, msg);
+                }
             }
         }
     }

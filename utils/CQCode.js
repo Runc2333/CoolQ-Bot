@@ -36,7 +36,7 @@ function record(src, isBase64 = false) {
 }
 
 function decode(text) {
-    let CQObjectsMatched = text.match(/\[CQ:.+?]/ig);
+    var CQObjectsMatched = text.match(/\[CQ:.+?]/ig);
     CQObjects = [];
     if (CQObjectsMatched !== null) {
         CQObjectsMatched.forEach(function (value, _key) {
@@ -84,7 +84,7 @@ function decode(text) {
                     });
                     break;
                 case "at":
-                    let atTarget = value.match(/(?<=,qq=).+(?=])/)[0]
+                    var atTarget = value.match(/(?<=,qq=).+(?=])/)[0]
                     CQObjects.push({
                         type: "at",
                         target: atTarget,
@@ -133,43 +133,57 @@ function decode(text) {
                     });
                     break;
                 case "music":
-                    let platform = value.match(/(?<=,type=).+?(?=[\],])/)[0]
+                    var platform = value.match(/(?<=,type=).+?(?=[\],])/)[0]
+                    var url = value.match(/(?<=,url=).+?(?=[\],])/);
+                    var audio = value.match(/(?<=,audio=).+?(?=[\],])/);
+                    var title = value.match(/(?<=,title=).+?(?=[\],])/);
+                    var content = value.match(/(?<=,content=).+?(?=[\],])/);
+                    var image = value.match(/(?<=,image=).+?(?=[\],])/);
+                    var id = value.match(/(?<=,id=).+?(?=[\],])/);
+                    var style = value.match(/(?<=,style=).+?(?=[\],])/);
                     if (platform == "custom") {
                         CQObjects.push({
                             type: "music",
                             platform: platform,
-                            url: value.match(/(?<=,url=).+?(?=[\],])/)[0],
-                            audio: value.match(/(?<=,audio=).+?(?=[\],])/)[0],
-                            title: value.match(/(?<=,title=).+?(?=[\],])/)[0],
-                            content: value.match(/(?<=,content=).+?(?=[\],])/)[0],
-                            image: value.match(/(?<=,image=).+?(?=[\],])/)[0],
+                            "url": url === null ? false : url[0],
+                            "audio": audio === null ? false : audio[0],
+                            "title": title === null ? false : title[0],
+                            "content": content === null ? false : content[0],
+                            "image": image === null ? false : image[0],
                             input: value,
                         });
                     } else {
                         CQObjects.push({
                             type: "music",
                             platform: platform,
-                            id: value.match(/(?<=,id=).+?(?=[\],])/)[0],
-                            style: value.match(/(?<=,style=).+?(?=[\],])/)[0],
+                            "id": id === null ? false : id[0],
+                            "style": style === null ? false : style[0], 
                             input: value,
                         });
                     }
                     break;
                 case "share":
+                    var url = value.match(/(?<=,url=).+?(?=[\],])/);
+                    var title = value.match(/(?<=,title=).+?(?=[\],])/);
+                    var content = value.match(/(?<=,content=).+?(?=[\],])/);
+                    var image = value.match(/(?<=,image=).+?(?=[\],])/);
                     CQObjects.push({
                         type: "share",
-                        url: value.match(/(?<=,url=).+?(?=[\],])/)[0],
-                        title: value.match(/(?<=,title=).+?(?=[\],])/)[0],
-                        content: value.match(/(?<=,content=).+?(?=[\],])/)[0],
-                        image: value.match(/(?<=,image=).+?(?=[\],])/)[0],
+                        "url": url === null ? false : url[0],
+                        "title": title === null ? false : title[0],
+                        "content": content === null ? false : content[0],
+                        "image": image === null ? false : image[0],
                         input: value,
                     });
                     break;
                 case "rich":
+                    var url = value.match(/(?<=,url=).+?(?=[\],])/);
+                    var text = value.match(/(?<=,text=).+?(?=[\],])/);
                     CQObjects.push({
                         type: "rich",
-                        // url: value.match(/(?<=,url=).+?(?=[\],])/)[0],
-                        // text: value.match(/(?<=,text=).+?(?=[\],])/)[0],
+                        "url": url === null ? false : url[0],
+                        "text": text === null ? false : text[0],
+                        input: value
                     });
                     break;
                 case "hb":
@@ -177,13 +191,17 @@ function decode(text) {
                     CQObjects.push({
                         type: "hb",
                         "title": title === null ? false : title[0],
+                        input: value
                     });
                     break;
                 case "show":
+                    var id = value.match(/(?<=,id=).+?(?=[\],])/);
+                    var qq = value.match(/(?<=,qq=).+?(?=[\],])/);
                     CQObjects.push({
-                        type: "hb",
+                        type: "show",
                         "id": id === null ? false : id[0],
                         "qq": qq === null ? false : qq[0],
+                        input: value
                     });
                     break;
                 default:
@@ -195,7 +213,7 @@ function decode(text) {
             }
         });
     }
-    let returnObject = {};
+    var returnObject = {};
     returnObject.CQObjects = CQObjects;
     returnObject.pureText = text.replace(/\[CQ:[\s\S]+?]/ig, "").replace(/^\s+|\s+$/ig, "");
     return returnObject;

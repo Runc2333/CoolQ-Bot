@@ -14,7 +14,7 @@ function handle(packet) {
     var BOT_QQNUM = config.get("GLOBAL", "BOT_QQNUM");
     switch (packet.message_type) {
         case "group":
-            log.write(`<${packet.group_id}> - <${packet.sender.nickname}>: ${packet.message}.`, "收到群组消息", "INFO");
+            log.write(`<${packet.group_id}> - <${packet.sender.nickname}>: ${packet.message}`, "收到群组消息", "INFO");
             /* 判断是否交给SuperCommandHandler处理 */
             if (/^#/.test(cqcode.decode(packet.message).pureText)) {
                 log.write("重定向到superCommand.js处理.", "MAIN THREAD", "INFO");
@@ -24,11 +24,11 @@ function handle(packet) {
             var messageType = "GROUP_MESSAGE";
             break;
         case "private":
-            log.write(`<${packet.sender.nickname}>: ${packet.message}.`, "收到私聊消息", "INFO");
+            log.write(`<${packet.sender.nickname}>: ${packet.message}`, "收到私聊消息", "INFO");
             var messageType = "PRIVATE_MESSAGE";
             break;
         case "discuss":
-            log.write(`<${packet.discuss_id}> - <${packet.sender.nickname}>: ${packet.message}.`, "收到讨论组消息", "INFO");
+            log.write(`<${packet.discuss_id}> - <${packet.sender.nickname}>: ${packet.message}`, "收到讨论组消息", "INFO");
             var messageType = "DISCUSS_MESSAGE";
             break;
         default:
