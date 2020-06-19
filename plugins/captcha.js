@@ -100,7 +100,7 @@ function captcha(packet) {
     // }
     var captchaImage = svgCaptcha.create({
         size: 6,
-        ignoreChars: "iIlLoOq10WMVwmvDUuVvaAsSdDfF",
+        ignoreChars: "iIlLoOq10WMVwmvDUuVvaAsSdDfFQ",
         noise: 2,
         background: "#FFFFFF",
         color: false

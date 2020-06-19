@@ -6,6 +6,7 @@ const config = require(`${processPath}/utils/configApi.js`);//设置
 const log = require(`${processPath}/utils/logger.js`);//日志
 const message = require(`${processPath}/utils/messageApi.js`);//消息接口
 const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
+const toolbox = require(`${processPath}/utils/toolbox.js`);//常用工具箱
 
 function init() {
     config.registerPlugin({
@@ -65,7 +66,7 @@ function listener(packet) {
         for (key in GROUP_CONFIGURATION) {
             for (key2 in GROUP_CONFIGURATION[key]) {
                 if (packet.message.indexOf(GROUP_CONFIGURATION[key][key2]) !== -1) {
-                    let msg = `在群组<${packet.group_id}>触发了关键词<${GROUP_CONFIGURATION[key][key2]}>.\n发送者：<${packet.sender.user_id}>\n原始信息：\n${packet.message}`
+                    let msg = `时间：${toolbox.formatTime(Math.floor(new Date().getTime() / 1000))}\n在群组<${packet.group_id}>触发了关键词<${GROUP_CONFIGURATION[key][key2]}>.\n发送者：<${packet.sender.user_id}>\n原始信息：\n${packet.message}`
                     message.send("private", key, msg);
                 }
             }
@@ -88,6 +89,7 @@ function add(packet) {
         GROUPS_CONFIGURATIONS[packet.group_id.toString()][packet.sender.user_id] = [];
     }
     GROUPS_CONFIGURATIONS[packet.group_id.toString()][packet.sender.user_id].push(keyword);
+    GROUPS_CONFIGURATIONS[packet.group_id.toString()][packet.sender.user_id] = toolbox.unique(GROUPS_CONFIGURATIONS[packet.group_id.toString()][packet.sender.user_id]);
     config.write("LISTENER", GROUPS_CONFIGURATIONS, "GROUPS_CONFIGURATIONS");
     var msg = "[Listener] 已成功注册监听词，触发监听词的消息将被转发给您.";
     message.prepare(packet, msg, true).send();

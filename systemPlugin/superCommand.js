@@ -14,8 +14,17 @@ function handle(packet) {
         if (regex.test(superCommand)) {
             if (regeistedSuperCommand[key].requirePermission === true) {
                 if (message.checkPermission(packet) === true) {
-                    log.write(`重定向到${regeistedSuperCommand[key].script}处理`, "SuperCommandHandler", "INFO");
-                    require(`${process.cwd().replace(/\\/g, "/")}/plugins/${regeistedSuperCommand[key].script}`)[regeistedSuperCommand[key].handler](packet);
+                    if (regeistedSuperCommand[key].requireSuperPermission === true) {
+                        if (message.checkSuperPermission(packet) === true) {
+                            log.write(`重定向到${regeistedSuperCommand[key].script}处理`, "SuperCommandHandler", "INFO");
+                            require(`${process.cwd().replace(/\\/g, "/")}/plugins/${regeistedSuperCommand[key].script}`)[regeistedSuperCommand[key].handler](packet);
+                        } else {
+                            log.write(`命令匹配，但使用者权限不足，已拒绝处理.`, "SuperCommandHandler", "INFO");
+                        }
+                    } else {
+                        log.write(`重定向到${regeistedSuperCommand[key].script}处理`, "SuperCommandHandler", "INFO");
+                        require(`${process.cwd().replace(/\\/g, "/")}/plugins/${regeistedSuperCommand[key].script}`)[regeistedSuperCommand[key].handler](packet);
+                    }
                 } else {
                     log.write(`命令匹配，但使用者权限不足，已拒绝处理.`, "SuperCommandHandler", "INFO");
                 }

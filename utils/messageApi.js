@@ -13,8 +13,11 @@ function cqat(uin) {
 }
 
 const BOT_QQNUM = config.get("GLOBAL", "BOT_QQNUM");
+const API_HOST = config.get("GLOBAL", "API_HOST");
+const API_HTTP_PORT = config.get("GLOBAL", "API_HTTP_PORT");
+const ACCESS_TOKEN = config.get("GLOBAL", "ACCESS_TOKEN");
 
-function send(type, uid, msg, escape = false) {
+function send(type, uid, msg, escape = false, async = true) {
     var data = {};
     switch (type) {
         case "group":
@@ -35,7 +38,11 @@ function send(type, uid, msg, escape = false) {
     }
     data.message = msg;
     data.auto_escape = escape === true ? true : false;
-    var url = `http://${config.get("GLOBAL", "API_HOST")}:${config.get("GLOBAL", "API_HTTP_PORT")}/send_msg?access_token=${config.get("GLOBAL", "ACCESS_TOKEN")}`;
+    if (async === false) {
+        var url = `http://${API_HOST}:${API_HTTP_PORT}/send_msg?access_token=${ACCESS_TOKEN}`;
+    } else {
+        var url = `http://${API_HOST}:${API_HTTP_PORT}/send_msg_async?access_token=${ACCESS_TOKEN}`;
+    }
     var res = request("POST", url, {
         json: data
     });
@@ -47,8 +54,12 @@ function send(type, uid, msg, escape = false) {
         log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [消息发送失败", "WARNING");
         return false;
     }
-    if (response.retcode == 0) {
-        log.write(`送往<${uid}>: <${msg}>.`, "MESSAGE API] [消息已送达", "INFO");
+    if (response.retcode == async === false ? 0 : 1) {
+        if (async === false) {
+            log.write(`送往<${uid}>: <${msg}>.`, "MESSAGE API] [消息已送达", "INFO");
+        } else {
+            log.write(`送往<${uid}>: <${msg}>.`, "MESSAGE API] [消息已放入异步队列", "INFO");
+        }
         switch (type) {
             case "group":
                 db.saveMessageIntoDatabase({
@@ -56,7 +67,7 @@ function send(type, uid, msg, escape = false) {
                     content: msg,
                     groupId: uid,
                     userId: BOT_QQNUM,
-                    messageId: response.data.message_id
+                    messageId: "async"
                 });
                 break;
             case "discuss":
@@ -65,7 +76,7 @@ function send(type, uid, msg, escape = false) {
                     content: msg,
                     groupId: uid,
                     userId: BOT_QQNUM,
-                    messageId: response.data.message_id
+                    messageId: "async"
                 });
                 break;
             case "private":
@@ -74,7 +85,7 @@ function send(type, uid, msg, escape = false) {
                     content: msg,
                     userId: uid,
                     sender: BOT_QQNUM,
-                    messageId: response.data.message_id
+                    messageId: "async"
                 });
                 break;
             default:
@@ -163,7 +174,7 @@ function prepare(packet, message, at = false) {
 function revoke(id, packet = "fuck") {
     var data = {};
     data.message_id = id;
-    var url = `http://${config.get("GLOBAL", "API_HOST")}:${config.get("GLOBAL", "API_HTTP_PORT")}/delete_msg?access_token=${config.get("GLOBAL", "ACCESS_TOKEN")}`;
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/delete_msg?access_token=${ACCESS_TOKEN}`;
     var res = request("POST", url, {
         json: data
     });
@@ -192,7 +203,7 @@ function kick(gid, uid) {
     var data = {};
     data.group_id = gid;
     data.user_id = uid;
-    var url = `http://${config.get("GLOBAL", "API_HOST")}:${config.get("GLOBAL", "API_HTTP_PORT")}/set_group_kick?access_token=${config.get("GLOBAL", "ACCESS_TOKEN")}`;
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/set_group_kick?access_token=${ACCESS_TOKEN}`;
     var res = request("POST", url, {
         json: data
     });
@@ -214,10 +225,37 @@ function kick(gid, uid) {
     }
 }
 
+function getGroupMemberInfo(gid, uid) {
+    var data = {};
+    data.group_id = gid;
+    data.user_id = uid;
+    data.no_cache = true;
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/get_group_member_info?access_token=${ACCESS_TOKEN}`;
+    var res = request("POST", url, {
+        json: data
+    });
+    try {
+        var response = JSON.parse(res.getBody("utf8"));
+    } catch (e) {
+        console.log(res.getBody("utf8"));
+        log.write("无法解析服务器返回的数据.", "MESSAGE API] [获取群成员信息失败", "WARNING");
+        log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [获取群成员信息失败", "WARNING");
+        return false;
+    }
+    if (response.retcode == 0) {
+        log.write(`成功获取群成员信息`, "MESSAGE API", "INFO");
+        return response.data;
+    } else {
+        console.log(res.getBody("utf8"));
+        log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [获取群成员信息失败", "WARNING");
+        return false;
+    }
+}
+
 function userinfo(uid) {
     var data = {};
     data.user_id = uid;
-    var url = `http://${config.get("GLOBAL", "API_HOST")}:${config.get("GLOBAL", "API_HTTP_PORT")}/get_stranger_info?access_token=${config.get("GLOBAL", "ACCESS_TOKEN")}`;
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/get_stranger_info?access_token=${ACCESS_TOKEN}`;
     var res = request("POST", url, {
         json: data
     });
@@ -240,7 +278,7 @@ function userinfo(uid) {
 }
 
 function getGroupList() {
-    var url = `http://${config.get("GLOBAL", "API_HOST")}:${config.get("GLOBAL", "API_HTTP_PORT")}/get_group_list?access_token=${config.get("GLOBAL", "ACCESS_TOKEN")}`;
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/get_group_list?access_token=${ACCESS_TOKEN}`;
     var res = request("GET", url);
     try {
         var response = JSON.parse(res.getBody("utf8"));
@@ -260,12 +298,48 @@ function getGroupList() {
     }
 }
 
+function changeNickname(gid, uid, name, async = true) {
+    var data = {};
+    data.group_id = gid;
+    data.user_id = uid;
+    data.card = name;
+    data.no_cache = true;
+    if (async === false) {
+        var url = `http://${API_HOST}:${API_HTTP_PORT}/set_group_card?access_token=${ACCESS_TOKEN}`;
+    } else {
+        var url = `http://${API_HOST}:${API_HTTP_PORT}/set_group_card_async?access_token=${ACCESS_TOKEN}`;
+    }
+    var res = request("POST", url, {
+        json: data
+    });
+    try {
+        var response = JSON.parse(res.getBody("utf8"));
+    } catch (e) {
+        console.log(res.getBody("utf8"));
+        log.write("无法解析服务器返回的数据.", "MESSAGE API] [修改群名片失败", "WARNING");
+        log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [修改群名片失败", "WARNING");
+        return false;
+    }
+    if (response.retcode == async === false ? 0 : 1) {
+        if (async === false) {
+            log.write(`目标:<${gid}> <${uid}> => ${name}.`, "MESSAGE API] [已修改群名片", "INFO");
+        } else {
+            log.write(`目标:<${gid}> <${uid}> => ${name}.`, "MESSAGE API] [修改请求已放入异步队列", "INFO");
+        }
+        return true;
+    } else {
+        console.log(res.getBody("utf8"));
+        log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [修改群名片失败", "WARNING");
+        return false;
+    }
+}
+
 function mute(gid, uid, time) {
     var data = {};
     data.group_id = gid;
     data.user_id = uid;
     data.duration = time;
-    var url = `http://${config.get("GLOBAL", "API_HOST")}:${config.get("GLOBAL", "API_HTTP_PORT")}/set_group_ban?access_token=${config.get("GLOBAL", "ACCESS_TOKEN")}`;
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/set_group_ban?access_token=${ACCESS_TOKEN}`;
     var res = request("POST", url, {
         json: data
     });
@@ -289,7 +363,16 @@ function mute(gid, uid, time) {
 }
 
 function checkPermission(packet) {
-    if (packet.sender.role !== "admin" && packet.sender.role !== "owner") {
+    if (!isGroupAdministrator(packet)) {
+        var msg = "权限不足.";
+        prepare(packet, msg, true).send();
+        return false;
+    }
+    return true;
+}
+
+function checkSuperPermission(packet) {
+    if (!isGlobalAdministrator(packet.sender.user_id)) {
         var msg = "权限不足.";
         prepare(packet, msg, true).send();
         return false;
@@ -302,7 +385,7 @@ function checkSelfPermission(gid) {
     data.group_id = gid;
     data.user_id = config.get("GLOBAL", "BOT_QQNUM");
     data.no_cache = true;
-    var url = `http://${config.get("GLOBAL", "API_HOST")}:${config.get("GLOBAL", "API_HTTP_PORT")}/get_group_member_info?access_token=${config.get("GLOBAL", "ACCESS_TOKEN")}`;
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/get_group_member_info?access_token=${ACCESS_TOKEN}`;
     var res = request("POST", url, {
         json: data
     });
@@ -324,6 +407,21 @@ function checkSelfPermission(gid) {
     }
 }
 
+function isGlobalAdministrator(uin) {
+    var GLOBAL_ADMINISTRATORS = config.get("GLOBAL", "GLOBAL_ADMINISTRATORS");//全局管理员
+    if (GLOBAL_ADMINISTRATORS.indexOf(uin.toString()) === -1) {
+        return false
+    }
+    return true;
+}
+
+function isGroupAdministrator(packet) {
+    if (packet.sender.role !== "admin" && packet.sender.role !== "owner") {
+        return false;
+    }
+    return true;
+}
+
 module.exports = {
     send,
     prepare,
@@ -333,5 +431,10 @@ module.exports = {
     getGroupList,
     mute,
     checkPermission,
-    checkSelfPermission
+    checkSuperPermission,
+    checkSelfPermission,
+    changeNickname,
+    getGroupMemberInfo,
+    isGlobalAdministrator,
+    isGroupAdministrator,
 }

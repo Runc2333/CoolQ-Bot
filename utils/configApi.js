@@ -195,7 +195,7 @@ function registerSuperCommand(arguments) {
 	}
 	var config = get("GLOBAL", "SUPER_COMMAND_REGISTRY");
 	if (typeof (config[arguments.command]) !== "undefined") {
-		log.write(`未能注册插件<${arguments.script}>: 命令</${arguments.command}>已被其他插件注册.`, "CONFIG API", "ERROR");
+		log.write(`未能注册插件<${arguments.script}>: 命令<#${arguments.command}>已被其他插件注册.`, "CONFIG API", "ERROR");
 		return false;
 	}
 	config[arguments.command] = {};
@@ -203,6 +203,7 @@ function registerSuperCommand(arguments) {
 	config[arguments.command]["handler"] = arguments.handler;
 	config[arguments.command]["argument"] = typeof (arguments.argument) !== "undefined" ? arguments.argument : "";
 	config[arguments.command]["requirePermission"] = arguments.requirePermission === true ? true : false;
+	config[arguments.command]["requireSuperPermission"] = arguments.requireSuperPermission === true ? true : false;
 	config[arguments.command]["description"] = typeof (arguments.description) !== "undefined" ? arguments.description : "";
 	write("GLOBAL", config, "SUPER_COMMAND_REGISTRY");
 	if (!arguments.skip) {

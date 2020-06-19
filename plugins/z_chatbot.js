@@ -2,7 +2,7 @@
 const processPath = process.cwd().replace(/\\/g, "/");//程序运行路径
 /* 模块 */
 const request = require("sync-request");//同步网络请求
-const async_request = require('request');
+const async_request = require('request');//异步网络请求
 const config = require(`${processPath}/utils/configApi.js`);//设置
 const log = require(`${processPath}/utils/logger.js`);//日志
 const message = require(`${processPath}/utils/messageApi.js`);//消息接口

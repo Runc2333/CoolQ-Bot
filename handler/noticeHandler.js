@@ -12,8 +12,7 @@ function handle(packet) {
             var noticeType = "GROUP_UPLOAD";
             // 在群内发送通知
             var userinfo = message.userinfo(packet.user_id);
-            essage.prepare(packet, `<${userinfo.nickname}>上传了学习资料[${packet.file.name}].`, false).send();
-
+            message.prepare(packet, `<${userinfo.nickname}>上传了学习资料[${packet.file.name}].`, false).send();
             break;
         case "group_admin"://管理员
             var noticeType = "GROUP_ADMIN";

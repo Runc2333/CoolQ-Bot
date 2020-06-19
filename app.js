@@ -55,9 +55,9 @@ bot.on("ready", function () {
     // message.getGroupList().forEach(function (item) {
     //     message.send("group", item.group_id, `后端进程已启动或已被重载.\n机器人服务已恢复可用.`);
     // });
-    GLOBAL_ADMINISTRATORS.forEach(function (item) {
-        message.send("private", item, "后端进程已启动或已被重载.\n机器人服务已恢复可用.");
-    });
+    // GLOBAL_ADMINISTRATORS.forEach(function (item) {
+    //     message.send("private", item, "后端进程已启动或已被重载.\n机器人服务已恢复可用.");
+    // });
 });
 
 //收到消息
@@ -100,7 +100,6 @@ bot.on("message", function (_CQEvent, packet) {
         }
     }
     messageHandler.handle(packet);
-    // console.log(packet);
 });
 
 //收到通知
@@ -123,9 +122,9 @@ process.on("exit", (code) => {
     // message.getGroupList().forEach(function (item) {
     //     message.send("group", item.group_id, `后端进程已捕获到终止指令，正在退出.\n机器人服务将暂时不可用.`);
     // });
-    GLOBAL_ADMINISTRATORS.forEach(function (item) {
-        message.send("private", item, `后端进程已捕获到终止指令，正在退出.\n机器人服务将暂时不可用.`);
-    });
+    // GLOBAL_ADMINISTRATORS.forEach(function (item) {
+    //     message.send("private", item, `后端进程已捕获到终止指令，正在退出.\n机器人服务将暂时不可用.`);
+    // });
     log.write("正在退出进程...", "进程结束", "INFO");
 });
 
@@ -135,9 +134,9 @@ process.on("uncaughtException", function (err) {
     // message.getGroupList().forEach(function (item) {
     //     message.send("group", item.group_id, `后端进程在运行中捕获到了一个异常, 请尽快查看日志.错误详情: \n${err}`);
     // });
-    GLOBAL_ADMINISTRATORS.forEach(function (item) {
-        message.send("private", item, `后端进程在运行中捕获到了一个异常, 请尽快查看日志.错误详情: \n${err}`);
-    });
+    // GLOBAL_ADMINISTRATORS.forEach(function (item) {
+    //     message.send("private", item, `后端进程在运行中捕获到了一个异常, 请尽快查看日志.错误详情: \n${err}`);
+    // });
 });
 
 /* 载入插件 */

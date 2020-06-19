@@ -206,9 +206,9 @@ function decode(text) {
                     break;
                 default:
                     log.write(`收到了未能解析的CQ码: ${value}`, "CQCode", "WARNING");
-                    GLOBAL_ADMINISTRATORS.forEach(function (item) {
-                        message.send("private", item, `收到了未能解析的CQ码: ${value}`, true);
-                    });
+                    // GLOBAL_ADMINISTRATORS.forEach(function (item) {
+                    //     message.send("private", item, `收到了未能解析的CQ码: ${value}`, true);
+                    // });
                     break;
             }
         });

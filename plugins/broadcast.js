@@ -28,12 +28,20 @@ function init() {
         description: "创建一个群发列表，用于进行私聊消息群发.\n使用示例：#创建群发列表 三音六派 @小黄@小白@小黑@小绿@小红"
     });
     config.registerSuperCommand({
+        command: "编辑群发列表",
+        script: "broadcast.js",
+        handler: "editBrocastList",
+        argument: "[群发列表名] [@要群发的群成员]",
+        requirePermission: true,
+        description: "编辑一个已经创建好的群发列表，提供的成员若在列表中已存在，则被删除；若不存在，则被添加.\n使用示例：#编辑群发列表 三音六派 @小黄@小蓝"
+    });
+    config.registerSuperCommand({
         command: "删除群发列表",
         script: "broadcast.js",
         handler: "removeBrocastList",
         argument: "[群发列表名]",
         requirePermission: true,
-        description: "删除指定的群发列表.n使用示例：#删除群发列表 三音六派"
+        description: "删除指定的群发列表.\n使用示例：#删除群发列表 三音六派"
     });
     config.registerSuperCommand({
         command: "显示群发列表",
@@ -57,7 +65,7 @@ function init() {
         handler: "abortBroadcast",
         argument: "<页数>",
         requirePermission: true,
-        description: "显示当前正在进行的/已完成的群发记录.\n使用示例：#显示群发状态 1"
+        description: "中止当前正在队列中的群发操作.\n使用示例：#中止群发"
     });
     config.registerSuperCommand({
         command: "显示群发状态",
@@ -89,6 +97,11 @@ const addBrocastList = (packet) => {
         message.prepare(packet, msg, true).send();
         return false;
     }
+    if (broadcastListName.length == 0) {
+        var msg = `您必须提供一个群发列表名.`;
+        message.prepare(packet, msg, true).send();
+        return false;
+    }
     if (typeof (GROUPS_CONFIGURATIONS[packet.group_id]) === "undefined") {
         GROUPS_CONFIGURATIONS[packet.group_id] = {};
     }
@@ -115,6 +128,45 @@ const addBrocastList = (packet) => {
     GROUPS_CONFIGURATIONS[packet.group_id][broadcastListName].BROADCAST_LIST_USERS = broadcastListUsers;
     config.write("BROADCAST", GROUPS_CONFIGURATIONS, "GROUPS_CONFIGURATIONS");
     var msg = `已成功建立群发列表，以下信息用于核对该列表是否正确：\n列表名称：${broadcastListName}\n列表成员：${broadcastListUsers.join("、")}`;
+    message.prepare(packet, msg, true).send();
+}
+
+const editBrocastList = (packet) => {
+    var GROUPS_CONFIGURATIONS = config.get("BROADCAST", "GROUPS_CONFIGURATIONS");
+    var options = cqcode.decode(packet.message);
+    var broadcastListName = options.pureText.replace(/^#编辑群发列表 */, "");
+    if (typeof (GROUPS_CONFIGURATIONS[packet.group_id]) === "undefined") {
+        var msg = `指定的群发列表不存在.`;
+        message.prepare(packet, msg, true).send();
+        return false;
+    }
+    if (typeof (GROUPS_CONFIGURATIONS[packet.group_id][broadcastListName]) === "undefined") {
+        var msg = `指定的群发列表不存在.`;
+        message.prepare(packet, msg, true).send();
+        return false;
+    } else {
+        var editBroadcastListUsers = [];
+        options.CQObjects.forEach((v) => {
+            if (v.type == "at" && v.me === false && v.target.length >= 5) {
+                editBroadcastListUsers.push(v.target.toString());
+            }
+        });
+        addCounter = 0;
+        deleteCounter = 0;
+        editBroadcastListUsers = toolbox.unique(editBroadcastListUsers);
+        editBroadcastListUsers.forEach((v) => {
+            var index = GROUPS_CONFIGURATIONS[packet.group_id][broadcastListName].BROADCAST_LIST_USERS.indexOf(v);
+            if (index === -1) {
+                GROUPS_CONFIGURATIONS[packet.group_id][broadcastListName].BROADCAST_LIST_USERS.push(v);
+                addCounter++;
+            } else {
+                GROUPS_CONFIGURATIONS[packet.group_id][broadcastListName].BROADCAST_LIST_USERS.splice(index, 1);
+                deleteCounter++;
+            }
+        });
+    }
+    config.write("BROADCAST", GROUPS_CONFIGURATIONS, "GROUPS_CONFIGURATIONS");
+    var msg = `已成功修改指定群发列表.\n${addCounter} 添加 ${deleteCounter} 删除`;
     message.prepare(packet, msg, true).send();
 }
 
@@ -186,7 +238,7 @@ const startBroadcast = (packet) => {
     }
     var GROUPS_CONFIGURATIONS = config.get("BROADCAST", "GROUPS_CONFIGURATIONS");
     var BROADCAST_RECORD = config.get("BROADCAST", "BROADCAST_RECORD");
-    var options = cqcode.decode(packet.message).pureText.replace(/^#开始群发 */, "").split(" ");
+    var options = packet.message.replace(/^#开始群发 */, "").split(" ");
     var broadcastListName = options.shift();
     if (typeof (GROUPS_CONFIGURATIONS[packet.group_id]) === "undefined") {
         var msg = `指定的群发列表不存在.`;
@@ -217,7 +269,7 @@ const startBroadcast = (packet) => {
     });
     config.write("BROADCAST", BROADCAST_RECORD, "BROADCAST_RECORD");
     setTimeout(function () {
-        broadcastWorker(GROUPS_CONFIGURATIONS[packet.group_id][broadcastListName].BROADCAST_LIST_USERS, content, packet.group_id);
+        broadcastWorker(GROUPS_CONFIGURATIONS[packet.group_id][broadcastListName].BROADCAST_LIST_USERS, `以下是来自群聊<${packet.group_id}>的群发内容：\n${content}`, packet.group_id);
     }, 5000);
     var msg = `已将群发任务置入队列.\n您可发送"#显示群发状态"来获取当前群发进度.`;
     message.prepare(packet, msg, true).send();
@@ -319,6 +371,7 @@ module.exports = {
     init,
     broadcast,
     addBrocastList,
+    editBrocastList,
     removeBrocastList,
     displayBrocastLists,
     startBroadcast,
