@@ -2,7 +2,9 @@
 /node_modules
 *.log
 /plugins/guide.js
+/plugins/boostmap.js
 sample.txt
-messages.db
 *.jpg
 *.png
+test.js
+*.db
