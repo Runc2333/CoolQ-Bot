@@ -4,9 +4,20 @@ const processPath = process.cwd().replace(/\\/g, "/");//程序运行路径
 const request = require("sync-request");//同步网络请求
 const log = require(`${processPath}/utils/logger.js`);//日志
 const config = require(`${processPath}/utils/configApi.js`);//设置
-const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
+const db = require(`${processPath}/utils/database.js`);//数据库
 
-function send(type, uid, msg) {
+// const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
+
+function cqat(uin) {
+    return `[CQ:at,qq=${uin}]`;
+}
+
+const BOT_QQNUM = config.get("GLOBAL", "BOT_QQNUM");
+const API_HOST = config.get("GLOBAL", "API_HOST");
+const API_HTTP_PORT = config.get("GLOBAL", "API_HTTP_PORT");
+const ACCESS_TOKEN = config.get("GLOBAL", "ACCESS_TOKEN");
+
+function send(type, uid, msg, escape = false, async = true) {
     var data = {};
     switch (type) {
         case "group":
@@ -26,12 +37,15 @@ function send(type, uid, msg) {
             return false;
     }
     data.message = msg;
-    data.auto_escape = false;
-    var url = `http://${config.get("GLOBAL", "API_HOST")}:${config.get("GLOBAL", "API_HTTP_PORT")}/send_msg?access_token=${config.get("GLOBAL", "ACCESS_TOKEN")}`;
+    data.auto_escape = escape === true ? true : false;
+    if (async === false) {
+        var url = `http://${API_HOST}:${API_HTTP_PORT}/send_msg?access_token=${ACCESS_TOKEN}`;
+    } else {
+        var url = `http://${API_HOST}:${API_HTTP_PORT}/send_msg_async?access_token=${ACCESS_TOKEN}`;
+    }
     var res = request("POST", url, {
         json: data
     });
-
     try {
         var response = JSON.parse(res.getBody("utf8"));
     } catch (e) {
@@ -40,8 +54,44 @@ function send(type, uid, msg) {
         log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [消息发送失败", "WARNING");
         return false;
     }
-    if (response.retcode == 0) {
-        log.write(`送往<${uid}>: <${msg}>.`, "MESSAGE API] [消息已送达", "INFO");
+    if (response.retcode == async === false ? 0 : 1) {
+        if (async === false) {
+            log.write(`送往<${uid}>: <${msg}>.`, "MESSAGE API] [消息已送达", "INFO");
+        } else {
+            log.write(`送往<${uid}>: <${msg}>.`, "MESSAGE API] [消息已放入异步队列", "INFO");
+        }
+        switch (type) {
+            case "group":
+                db.saveMessageIntoDatabase({
+                    type: type,
+                    content: msg,
+                    groupId: uid,
+                    userId: BOT_QQNUM,
+                    messageId: "async"
+                });
+                break;
+            case "discuss":
+                db.saveMessageIntoDatabase({
+                    type: type,
+                    content: msg,
+                    groupId: uid,
+                    userId: BOT_QQNUM,
+                    messageId: "async"
+                });
+                break;
+            case "private":
+                db.saveMessageIntoDatabase({
+                    type: type,
+                    content: msg,
+                    userId: uid,
+                    sender: BOT_QQNUM,
+                    messageId: "async"
+                });
+                break;
+            default:
+                log.write("遇到了不支持的消息类型.", "MAIN THREAD", "ERROR");
+                break;
+        }
     } else {
         console.log(res.getBody("utf8"));
         log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [消息发送失败", "WARNING");
@@ -55,7 +105,7 @@ function prepare(packet, message, at = false) {
             switch (packet.message_type) {
                 case "group":
                     if (at) {
-                        message = `${cqcode.at(packet.sender.user_id)}\n${message}`;
+                        message = `${cqat(packet.sender.user_id)}\n${message}`;
                     }
                     var type = "group";
                     var uid = packet.group_id;
@@ -81,7 +131,7 @@ function prepare(packet, message, at = false) {
                     break;
                 default:
                     if (at) {
-                        message = `${cqcode.at(packet.user_id)}\n${message}`;
+                        message = `${cqat(packet.user_id)}\n${message}`;
                     }
                     var type = "group";
                     var uid = packet.group_id;
@@ -89,8 +139,27 @@ function prepare(packet, message, at = false) {
             }
             break;
         case "request":
-            log.write("处理失败:无法处理Request.", "MESSAGE API", "WARNING");
-            return false;
+            switch (packet.request_type) {
+                case "friend":
+                    var type = "private";
+                    var uid = packet.user_id;
+                    break;
+                case "group":
+                    if (at) {
+                        message = `${cqat(packet.user_id)}\n${message}`;
+                    }
+                    var type = "group";
+                    var uid = packet.group_id;
+                    break;
+                default:
+                    if (at) {
+                        message = `${cqat(packet.user_id)}\n${message}`;
+                    }
+                    var type = "group";
+                    var uid = packet.group_id;
+                    break
+            }
+            break;
         default:
             log.write("处理失败:传入的参数类型不受支持.", "MESSAGE API", "WARNING");
             return false;
@@ -102,10 +171,10 @@ function prepare(packet, message, at = false) {
     }
 }
 
-function revoke(id) {
+function revoke(id, packet = "fuck") {
     var data = {};
     data.message_id = id;
-    var url = `http://${config.get("GLOBAL", "API_HOST")}:${config.get("GLOBAL", "API_HTTP_PORT")}/delete_msg?access_token=${config.get("GLOBAL", "ACCESS_TOKEN")}`;
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/delete_msg?access_token=${ACCESS_TOKEN}`;
     var res = request("POST", url, {
         json: data
     });
@@ -119,15 +188,253 @@ function revoke(id) {
     }
     if (response.retcode == 0) {
         log.write(`消息ID: <${id}>.`, "MESSAGE API] [已撤回消息", "INFO");
+        return true;
     } else {
         console.log(res.getBody("utf8"));
+        if (packet != "fuck") {
+            prepare(packet, `未能撤回消息<${id}>，可能的原因：\n权限不足.`).send();
+        }
         log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [消息撤回失败", "WARNING");
         return false;
     }
 }
 
+function kick(gid, uid) {
+    var data = {};
+    data.group_id = gid;
+    data.user_id = uid;
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/set_group_kick?access_token=${ACCESS_TOKEN}`;
+    var res = request("POST", url, {
+        json: data
+    });
+    try {
+        var response = JSON.parse(res.getBody("utf8"));
+    } catch (e) {
+        console.log(res.getBody("utf8"));
+        log.write("无法解析服务器返回的数据.", "MESSAGE API] [移除成员失败", "WARNING");
+        log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [移除成员失败", "WARNING");
+        return false;
+    }
+    if (response.retcode == 0) {
+        log.write(`群: <${gid}>. 成员: <${uid}>`, "MESSAGE API] [已移除成员", "INFO");
+    } else {
+        console.log(res.getBody("utf8"));
+        send("group", gid, `未能移除群成员<${userinfo(uid).nickname}>.\n可能的原因: 权限不足.`);
+        log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [移除成员失败", "WARNING");
+        return false;
+    }
+}
+
+function getGroupMemberInfo(gid, uid) {
+    var data = {};
+    data.group_id = gid;
+    data.user_id = uid;
+    data.no_cache = true;
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/get_group_member_info?access_token=${ACCESS_TOKEN}`;
+    var res = request("POST", url, {
+        json: data
+    });
+    try {
+        var response = JSON.parse(res.getBody("utf8"));
+    } catch (e) {
+        console.log(res.getBody("utf8"));
+        log.write("无法解析服务器返回的数据.", "MESSAGE API] [获取群成员信息失败", "WARNING");
+        log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [获取群成员信息失败", "WARNING");
+        return false;
+    }
+    if (response.retcode == 0) {
+        log.write(`成功获取群成员信息`, "MESSAGE API", "INFO");
+        return response.data;
+    } else {
+        console.log(res.getBody("utf8"));
+        log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [获取群成员信息失败", "WARNING");
+        return false;
+    }
+}
+
+function userinfo(uid) {
+    var data = {};
+    data.user_id = uid;
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/get_stranger_info?access_token=${ACCESS_TOKEN}`;
+    var res = request("POST", url, {
+        json: data
+    });
+    try {
+        var response = JSON.parse(res.getBody("utf8"));
+    } catch (e) {
+        console.log(res.getBody("utf8"));
+        log.write("无法解析服务器返回的数据.", "MESSAGE API] [获取陌生人信息失败", "WARNING");
+        log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [获取陌生人信息失败", "WARNING");
+        return false;
+    }
+    if (response.retcode == 0) {
+        log.write(`目标用户: <${uid}>`, "MESSAGE API] [成功获取陌生人信息", "INFO");
+        return response.data;
+    } else {
+        console.log(res.getBody("utf8"));
+        log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [获取陌生人信息失败", "WARNING");
+        return false;
+    }
+}
+
+function getGroupList() {
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/get_group_list?access_token=${ACCESS_TOKEN}`;
+    var res = request("GET", url);
+    try {
+        var response = JSON.parse(res.getBody("utf8"));
+    } catch (e) {
+        console.log(res.getBody("utf8"));
+        log.write("无法解析服务器返回的数据.", "MESSAGE API] [获取群列表失败", "WARNING");
+        log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [获取群列表失败", "WARNING");
+        return false;
+    }
+    if (response.retcode == 0) {
+        log.write(`已完成所请求的服务.`, "MESSAGE API] [成功获取群列表", "INFO");
+        return response.data;
+    } else {
+        console.log(res.getBody("utf8"));
+        log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [获取群列表失败", "WARNING");
+        return false;
+    }
+}
+
+function changeNickname(gid, uid, name, async = true) {
+    var data = {};
+    data.group_id = gid;
+    data.user_id = uid;
+    data.card = name;
+    data.no_cache = true;
+    if (async === false) {
+        var url = `http://${API_HOST}:${API_HTTP_PORT}/set_group_card?access_token=${ACCESS_TOKEN}`;
+    } else {
+        var url = `http://${API_HOST}:${API_HTTP_PORT}/set_group_card_async?access_token=${ACCESS_TOKEN}`;
+    }
+    var res = request("POST", url, {
+        json: data
+    });
+    try {
+        var response = JSON.parse(res.getBody("utf8"));
+    } catch (e) {
+        console.log(res.getBody("utf8"));
+        log.write("无法解析服务器返回的数据.", "MESSAGE API] [修改群名片失败", "WARNING");
+        log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [修改群名片失败", "WARNING");
+        return false;
+    }
+    if (response.retcode == async === false ? 0 : 1) {
+        if (async === false) {
+            log.write(`目标:<${gid}> <${uid}> => ${name}.`, "MESSAGE API] [已修改群名片", "INFO");
+        } else {
+            log.write(`目标:<${gid}> <${uid}> => ${name}.`, "MESSAGE API] [修改请求已放入异步队列", "INFO");
+        }
+        return true;
+    } else {
+        console.log(res.getBody("utf8"));
+        log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [修改群名片失败", "WARNING");
+        return false;
+    }
+}
+
+function mute(gid, uid, time) {
+    var data = {};
+    data.group_id = gid;
+    data.user_id = uid;
+    data.duration = time;
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/set_group_ban?access_token=${ACCESS_TOKEN}`;
+    var res = request("POST", url, {
+        json: data
+    });
+    try {
+        var response = JSON.parse(res.getBody("utf8"));
+    } catch (e) {
+        console.log(res.getBody("utf8"));
+        log.write("无法解析服务器返回的数据.", "MESSAGE API] [设置禁言失败", "WARNING");
+        log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [设置禁言失败", "WARNING");
+        return false;
+    }
+    if (response.retcode == 0) {
+        log.write(`目标用户: <${uid}>`, "MESSAGE API] [成功设置禁言", "INFO");
+        return response.data;
+    } else {
+        console.log(res.getBody("utf8"));
+        send("group", gid, `对用户<${uid}>的禁言操作失败，可能的原因：\n权限不足.`);
+        log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [设置禁言失败", "WARNING");
+        return false;
+    }
+}
+
+function checkPermission(packet) {
+    if (!isGroupAdministrator(packet)) {
+        var msg = "权限不足.";
+        prepare(packet, msg, true).send();
+        return false;
+    }
+    return true;
+}
+
+function checkSuperPermission(packet) {
+    if (!isGlobalAdministrator(packet.sender.user_id)) {
+        var msg = "权限不足.";
+        prepare(packet, msg, true).send();
+        return false;
+    }
+    return true;
+}
+
+function checkSelfPermission(gid) {
+    var data = {};
+    data.group_id = gid;
+    data.user_id = config.get("GLOBAL", "BOT_QQNUM");
+    data.no_cache = true;
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/get_group_member_info?access_token=${ACCESS_TOKEN}`;
+    var res = request("POST", url, {
+        json: data
+    });
+    try {
+        var response = JSON.parse(res.getBody("utf8"));
+    } catch (e) {
+        console.log(res.getBody("utf8"));
+        log.write("无法解析服务器返回的数据.", "MESSAGE API] [获取机器人权限失败", "WARNING");
+        log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [获取机器人权限失败", "WARNING");
+        return false;
+    }
+    if (response.retcode == 0) {
+        log.write(`成功获取机器人权限`, "MESSAGE API", "INFO");
+        return response.data.role == "member" ? false : true;
+    } else {
+        console.log(res.getBody("utf8"));
+        log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [获取机器人权限失败", "WARNING");
+        return false;
+    }
+}
+
+function isGlobalAdministrator(uin) {
+    var GLOBAL_ADMINISTRATORS = config.get("GLOBAL", "GLOBAL_ADMINISTRATORS");//全局管理员
+    if (GLOBAL_ADMINISTRATORS.indexOf(uin.toString()) === -1) {
+        return false
+    }
+    return true;
+}
+
+function isGroupAdministrator(packet) {
+    if (packet.sender.role !== "admin" && packet.sender.role !== "owner") {
+        return false;
+    }
+    return true;
+}
+
 module.exports = {
     send,
     prepare,
-    revoke
+    revoke,
+    kick,
+    userinfo,
+    getGroupList,
+    mute,
+    checkPermission,
+    checkSuperPermission,
+    checkSelfPermission,
+    changeNickname,
+    getGroupMemberInfo,
+    isGlobalAdministrator,
+    isGroupAdministrator,
 }

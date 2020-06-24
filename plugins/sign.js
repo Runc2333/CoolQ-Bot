@@ -19,6 +19,7 @@ function init() {
 
 function sign(packet) {
     message.prepare(packet, `签到成功，你🐎死了。`, true).send();
+    return true;
 }
 
 module.exports = {

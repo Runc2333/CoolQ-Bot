@@ -24,6 +24,7 @@ function outOfThinAir(packet) {
         var msg = OOTAS[key];
         message.prepare(packet, msg, false).send();
     }
+    return true;
 }
 
 module.exports = {

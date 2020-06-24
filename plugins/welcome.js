@@ -16,11 +16,25 @@ function init() {
         description: "给新成员发送入群欢迎"
     });
     config.registerSuperCommand({
-        command: "welcome",
+        command: "设置欢迎语",
         script: "welcome.js",
-        handler: "command",
-        argument: "[action]",
-        description: "入群欢迎插件入口, 以下是参数说明:\n[action]:\nset [string] - 设置入群时给新成员发送的话语#admin\nremove - 移除当前设置的入群欢迎语#admin\ndisplay - 显示当前设置的入群欢迎语"
+        handler: "set",
+        argument: "[欢迎语]",
+        requirePermission: true,
+        description: "设置入群时给新成员发送的话语，使用示例：#设置欢迎语 欢迎入群！本群24小时空调开放，来了就别想走了哦~"
+    });
+    config.registerSuperCommand({
+        command: "移除欢迎语",
+        script: "welcome.js",
+        handler: "remove",
+        requirePermission: true,
+        description: "移除当前设置的欢迎语，使用示例：#移除欢迎语"
+    });
+    config.registerSuperCommand({
+        command: "显示欢迎语",
+        script: "welcome.js",
+        handler: "display",
+        description: "显示当前设置的欢迎语，使用示例：#显示欢迎语"
     });
     if (config.get("WELCOME") === false) {
         var data = {};
@@ -35,55 +49,54 @@ function welcome(packet) {
     if (typeof (welcomeString) === "undefined") {
         return false;
     }
-    message.prepare(packet, welcomeString, true).send();
+    message.prepare(packet, welcomeString.replace(/&#91;/g, "[").replace(/&#93;/g, "]"), true).send();
 }
 
-function command(packet) {
-    var options = cqcode.decode(packet.message).pureText.split(" ");
-    switch (options[1]) {
-        case "set":
-            /* 检查权限 */
-            if (config.checkPermission(packet) === false) {
-                return false;
-            }
-            var DISABLE_GROUPS = config.get("WELCOME", "DISABLE_GROUPS");//读出配置文件里的已禁用群组
-            var index = DISABLE_GROUPS.indexOf(packet.group_id.toString());//判断是否已经禁用
-            if (index === -1) {
-                //处于启用状态
-                options.shift();
-                options.shift();
-                var welcomeString = options.join(" ").replace(new RegExp("\r\n", "gm"), "\n");
-                var welcomeStrings = config.get("WELCOME", "GROUP_WELCOME_STRINGS");
-                welcomeStrings[packet.group_id.toString()] = welcomeString;
-                config.write("WELCOME", welcomeStrings, "GROUP_WELCOME_STRINGS");
-                var msg = "[Welcome] 已成功设定入群欢迎语.";
-            } else {
-                //处于禁用状态
-                var msg = "[Welcome] 目前处于禁用状态, 请先启用后再设置入群欢迎语.";
-            }
-            message.prepare(packet, msg, true).send();
-            break;
-        case "remove":
-            /* 检查权限 */
-            if (config.checkPermission(packet) === false) {
-                return false;
-            }
-            var welcomeStrings = config.get("WELCOME", "GROUP_WELCOME_STRINGS");
-            welcomeStrings[packet.group_id.toString()] = welcomeString;
-            break;
-        case "display":
-
-            break;
-        default:
-            log.write("处理失败:未知指令.", "WELCOME", "WARNING");
-            var msg = "[Welcome] 未知指令.";
-            message.prepare(packet, msg, true).send();
-            return false;
+function set(packet) {
+    /* 检查权限 */
+    if (message.checkPermission(packet) === false) {
+        return false;
     }
+    var welcomeString = cqcode.decode(packet.message).pureText.replace(/^#设置欢迎语 */, "");
+    var GROUP_WELCOME_STRINGS = config.get("WELCOME", "GROUP_WELCOME_STRINGS");
+    GROUP_WELCOME_STRINGS[packet.group_id.toString()] = welcomeString;
+    config.write("WELCOME", GROUP_WELCOME_STRINGS, "GROUP_WELCOME_STRINGS");
+    var msg = "[Welcome] 已成功设定入群欢迎语.";
+    message.prepare(packet, msg, true).send();
+    return true;
+}
+
+function remove(packet) {
+    /* 检查权限 */
+    if (message.checkPermission(packet) === false) {
+        return false;
+    }
+    var GROUP_WELCOME_STRINGS = config.get("WELCOME", "GROUP_WELCOME_STRINGS");
+    if (typeof (GROUP_WELCOME_STRINGS[packet.group_id.toString()]) === "undefined") {
+        message.prepare(packet, `本群目前未设置任何入群欢迎语.\n使用指令"#设置欢迎语 [欢迎语]"来设置入群欢迎语.`, true).send();
+        return false;
+    } else {
+        delete GROUP_WELCOME_STRINGS[packet.group_id.toString()]
+    }
+    config.write("WELCOME", GROUP_WELCOME_STRINGS, "GROUP_WELCOME_STRINGS");
+    message.prepare(packet, `已经移除入群欢迎语.`, true).send();
+    return true;
+}
+
+function display(packet) {
+    var GROUP_WELCOME_STRINGS = config.get("WELCOME", "GROUP_WELCOME_STRINGS");
+    if (typeof (GROUP_WELCOME_STRINGS[packet.group_id.toString()]) === "undefined") {
+        message.prepare(packet, `本群目前未设置任何入群欢迎语.\n使用指令"#设置欢迎语 [欢迎语]"来设置入群欢迎语.`, true).send();
+        return false;
+    }
+    message.prepare(packet, `本群目前设置的入群欢迎语如下：\n${GROUP_WELCOME_STRINGS[packet.group_id.toString()]}`, true).send();
+    return true;
 }
 
 module.exports = {
     init,
     welcome,
-    command
+    set,
+    remove,
+    display,
 }

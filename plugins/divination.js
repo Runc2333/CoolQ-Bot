@@ -14,7 +14,7 @@ function init() {
         script: "divination.js",
         handler: "divination",
         regex: "/(^占卜|占卜$|^抽签|抽签$)/",
-        description: "抽签吗大兄弟"
+        description: "抽一张签"
     });
 }
 
@@ -23,6 +23,7 @@ function divination(packet) {
     var picSeqToSend = Math.floor(Math.random() * (divinations.length - 0 + 1) + 0)
     var picToSend = `file:///${processPath}/images/divination/${divinations[picSeqToSend]}`;
     message.prepare(packet, `抽签成功！\n${cqcode.image(picToSend)}`, true).send();
+    return true;
 }
 
 module.exports = {

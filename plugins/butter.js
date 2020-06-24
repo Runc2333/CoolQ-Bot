@@ -14,7 +14,7 @@ function init() {
         script: "butter.js",
         handler: "butter",
         regex: "/(^来点色图$)/",
-        description: "看涩图吗大兄弟"
+        description: "随机发送一张涩图"
     });
 }
 
@@ -23,6 +23,7 @@ function butter(packet) {
     var butterSeqToSend = Math.floor(Math.random() * (butters.length - 0 + 1) + 0)
     var picToSend = `file:///${processPath}/images/butter/${butters[butterSeqToSend]}`;
     message.prepare(packet, `${cqcode.image(picToSend)}`, true).send();
+    return true;
 }
 
 module.exports = {

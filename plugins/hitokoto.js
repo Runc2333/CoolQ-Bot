@@ -14,7 +14,7 @@ function init() {
         script: "hitokoto.js",
         handler: "hitokoto",
         regex: "/(^一言|一言$|hitokoto)/",
-        description: "获取一句话~"
+        description: "获取一句话"
     });
 }
 
@@ -31,6 +31,7 @@ function hitokoto(packet) {
     }
     var msg = `${response.hitokoto} ——${response.from}`;
     message.prepare(packet, msg, true).send();
+    return true;
 }
 
 module.exports = {

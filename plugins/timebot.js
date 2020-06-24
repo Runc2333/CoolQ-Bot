@@ -106,7 +106,7 @@ function command(packet) {
     switch (options[1]) {
         case "enable":
             /* 检查权限 */
-            if (config.checkPermission(packet) === false) {
+            if (message.checkPermission(packet) === false) {
                 return false;
             }
             var DISABLE_GROUPS = config.get("TIMEBOT", "DISABLE_GROUPS");//读出配置文件里的已禁用群组
@@ -124,7 +124,7 @@ function command(packet) {
             break;
         case "disable":
             /* 检查权限 */
-            if (config.checkPermission(packet) === false) {
+            if (message.checkPermission(packet) === false) {
                 return false;
             }
             var DISABLE_GROUPS = config.get("TIMEBOT", "DISABLE_GROUPS");//读出配置文件里的已禁用群组
