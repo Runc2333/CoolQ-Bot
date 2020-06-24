@@ -70,6 +70,11 @@ function searchByUinAndKeyword(packet) {
         message.prepare(packet, msg, true).send();
         return false;
     }
+    if (page > Math.ceil(data.length / 5)) {
+        var msg = `指定的页数超出范围，可接受的范围：(1 - ${Math.ceil(data.length / 5)}).`;
+        message.prepare(packet, msg, true).send();
+        return false;
+    }
     data = data.reverse();
     let start = (page - 1) * 5;
     let end = data.length < start + 5 ? data.length : start + 5;
@@ -108,6 +113,11 @@ function searchByKeyword(packet) {
     var data = db.searchMessageByGidAndContent(packet.group_id, keyword);
     if (data.length == 0) {
         var msg = `针对查询未找到任何结果.`;
+        message.prepare(packet, msg, true).send();
+        return false;
+    }
+    if (page > Math.ceil(data.length / 5)) {
+        var msg = `指定的页数超出范围，可接受的范围：(1 - ${Math.ceil(data.length / 5)}).`;
         message.prepare(packet, msg, true).send();
         return false;
     }

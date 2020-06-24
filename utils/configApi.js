@@ -1,6 +1,7 @@
 /* 常量 */
 const processPath = process.cwd().replace(/\\/g, "/");//程序运行路径
 const configFilePath = `${processPath}/config/config.json`;//配置文件路径
+const configBakPath = `${processPath}/config/bak`;//配置文件备份路径
 /* 模块 */
 const fs = require("fs");//文件系统读写
 const log = require(`${processPath}/utils/logger.js`);//日志
@@ -41,6 +42,12 @@ function get(section, field = null) {
 
 function write(section, data, field = null) {
 	var configObject = readFileConfigIntoObject();
+	try {
+		fs.writeFileSync(`${configBakPath}/${tool.formatTime(null)}_config.json.bak`, configString);//写入
+	} catch (e) {
+		log.write("无法写入配置文件: config/config.json!", "CONFIG API", "ERROR");
+		process.exit(true);
+	}
 	if (field === null) {
 		configObject[section] = data;//填入数据
 	} else {

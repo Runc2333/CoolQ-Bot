@@ -43,27 +43,20 @@ function init() {
         handler: "userExit",
         description: "给新成员发送入群欢迎"
     });
-    // config.registerSuperCommand({
-    //     command: "captcha",
-    //     script: "captcha.js",
-    //     handler: "command",
-    //     argument: "[action]",
-    //     description: "入群验证插件入口, 以下是参数说明:\n[action]:\nenable - 启用入群验证.#admin\ndisable - 禁用入群验证.#admin"
-    // });
     if (config.get("CAPTCHA") === false) {
         var data = {};
-        // data["IGNORED_GROUPS"] = [];
         data["PENDING_CAPTCHA"] = [];
         config.write("CAPTCHA", data);
         log.write("未在配置文件内找到插件配置, 已自动生成默认配置.", "CAPTCHA", "INFO");
     } else {
         var PENDING_CAPTCHA = config.get("CAPTCHA", "PENDING_CAPTCHA");
         for (key in PENDING_CAPTCHA) {
+            var user_id = PENDING_CAPTCHA[key].userId;
             message.send("group", PENDING_CAPTCHA[key].group, `${cqcode.at(`${PENDING_CAPTCHA[key].userId}`)}\n因后端程序重启，验证时间已被重置.\n请在600秒内发送下图中的验证码，不区分大小写.\n若超时未发送, 您将会被移出群聊.${cqcode.image(`${PENDING_CAPTCHA[key].image}`)}\n发送"换一张"可更换一张验证码.`);
             setTimeout(function () {
                 var PENDING_CAPTCHA = config.get("CAPTCHA", "PENDING_CAPTCHA");
                 for (key in PENDING_CAPTCHA) {
-                    if (PENDING_CAPTCHA[key].userId == PENDING_CAPTCHA[key].userId) {
+                    if (user_id == PENDING_CAPTCHA[key].userId) {
                         message.send("group", PENDING_CAPTCHA[key].group, `${cqcode.at(`${PENDING_CAPTCHA[key].userId}`)}\n您将在300秒后被移出群组，若要避免，请发送下图中的验证码，不区分大小写.${cqcode.image(PENDING_CAPTCHA[key].image)}\n发送"换一张"可更换一张验证码.`);
                         return true;
                     }
@@ -72,7 +65,7 @@ function init() {
             setTimeout(function () {
                 var PENDING_CAPTCHA = config.get("CAPTCHA", "PENDING_CAPTCHA");
                 for (key in PENDING_CAPTCHA) {
-                    if (PENDING_CAPTCHA[key].userId == PENDING_CAPTCHA[key].userId) {
+                    if (user_id == PENDING_CAPTCHA[key].userId) {
                         message.send("group", PENDING_CAPTCHA[key].group, `${cqcode.at(`${PENDING_CAPTCHA[key].userId}`)}\n您已因超时未验证被移出群聊，若有需要，您可重新申请加入.`);
                         var tmp = key;
                         setTimeout(function () {
@@ -94,10 +87,6 @@ function captcha(packet) {
         message.prepare(packet, `欢迎加入群聊！\n因无管理员权限，入群验证能力已停用.`, true).send();
         return false;
     }
-    // var IGNORED_GROUPS = config.get("CAPTCHA", "IGNORED_GROUPS");
-    // if (IGNORED_GROUPS.indexOf(packet.group_id.toString()) !== -1) {
-    //     return false;
-    // }
     var captchaImage = svgCaptcha.create({
         size: 6,
         ignoreChars: "iIlLoOq10WMVwmvDUuVvaAsSdDfFQ",
@@ -120,7 +109,7 @@ function captcha(packet) {
         setTimeout(function () {
             var PENDING_CAPTCHA = config.get("CAPTCHA", "PENDING_CAPTCHA");
             for (key in PENDING_CAPTCHA) {
-                if (PENDING_CAPTCHA[key].userId == packet.user_id.toString()) {
+                if (PENDING_CAPTCHA[key].userId == packet.user_id.toString() && PENDING_CAPTCHA[key].group == packet.group_id.toString()) {
                     message.prepare(packet, `您将在300秒后被移出群组，若要避免，请发送下图中的验证码，不区分大小写.${cqcode.image(imageBase64)}\n发送"换一张"可更换一张验证码.`, true).send();
                     // console.log("Timer1 Done.");
                     return true;
@@ -130,7 +119,7 @@ function captcha(packet) {
         setTimeout(function () {
             var PENDING_CAPTCHA = config.get("CAPTCHA", "PENDING_CAPTCHA");
             for (key in PENDING_CAPTCHA) {
-                if (PENDING_CAPTCHA[key].userId == packet.user_id.toString()) {
+                if (PENDING_CAPTCHA[key].userId == packet.user_id.toString() && PENDING_CAPTCHA[key].group == packet.group_id.toString()) {
                     message.prepare(packet, `您已因超时未验证被移出群聊，若有需要，您可重新申请加入.`, true).send();
                     PENDING_CAPTCHA.splice(key, 1);
                     config.write("CAPTCHA", PENDING_CAPTCHA, "PENDING_CAPTCHA");
@@ -142,6 +131,7 @@ function captcha(packet) {
             }
         }, 600 * 1000);
     }).catch(function (err) {
+        console.log(err);
         message.prepare(packet, `后端错误: 未能生成验证码图片.`, true).send();
     });
 }
@@ -212,50 +202,12 @@ function refresh(packet) {
             config.write("CAPTCHA", PENDING_CAPTCHA, "PENDING_CAPTCHA");
             message.prepare(packet, `验证码已被刷新，请发送下图中的验证码，不区分大小写.${cqcode.image(imageBase64)}`, true).send();
         }).catch(function (err) {
+            console.log(err);
             message.prepare(packet, `后端错误: 未能生成验证码图片.`, true).send();
         });
     }
     config.write("CAPTCHA", PENDING_CAPTCHA, "PENDING_CAPTCHA");
 }
-
-// function command(packet) {
-//     var options = cqcode.decode(packet.message).pureText.split(" ");
-//     switch (options[1]) {
-//         case "enable":
-//             var IGNORED_GROUPS = config.get("CAPTCHA", "IGNORED_GROUPS");
-//             var index = IGNORED_GROUPS.indexOf(packet.group_id.toString());//判断是否已经禁用
-//             if (index === -1) {
-//                 //处于启用状态
-//                 var msg = "[Captcha] 已经是启用状态了, 无需重复启用.";
-//             } else {
-//                 //处于禁用状态
-//                 IGNORED_GROUPS.splice(index, 1);
-//                 config.write("CHATBOT", IGNORED_GROUPS, "IGNORED_GROUPS");
-//                 var msg = "[Captcha] 成功启用入群验证功能，从现在开始，新加群的成员将需要完成验证码.";
-//             }
-//             message.prepare(packet, msg, true).send();
-//             break;
-//         case "disable":
-//             var IGNORED_GROUPS = config.get("CAPTCHA", "IGNORED_GROUPS");
-//             var index = IGNORED_GROUPS.indexOf(packet.group_id.toString());//判断是否已经禁用
-//             if (index === -1) {
-//                 //处于启用状态
-//                 IGNORED_GROUPS.push(userId.toString());
-//                 config.write("CHATBOT", IGNORED_GROUPS, "IGNORED_GROUPS");
-//                 var msg = "[Captcha] 成功禁用入群验证功能，从现在开始，新加群的成员将不需要进行验证.";
-//             } else {
-//                 //处于禁用状态
-//                 var msg = "[Captcha] 已经是禁用状态了, 无需重复禁用.";
-//             }
-//             message.prepare(packet, msg, true).send();
-//             break;
-//         default:
-//             log.write("处理失败:未知指令.", "CAPTCHA", "WARNING");
-//             var msg = "[Captcha] 未知指令.";
-//             message.prepare(packet, msg, true).send();
-//             return false;
-//     }
-// }
 
 module.exports = {
     init,
@@ -263,5 +215,4 @@ module.exports = {
     auth,
     userExit,
     refresh,
-    // command
 }

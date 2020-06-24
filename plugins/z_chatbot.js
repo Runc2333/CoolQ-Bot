@@ -69,7 +69,7 @@ function chatbot(packet) {
     var regex = eval(`/(^${config.get("GLOBAL", "BOT_NAME")}|\\[CQ:at,qq=${config.get("GLOBAL", "BOT_QQNUM")}\\])/ig`);
     var spoken = cqcode.decode(packet.message).pureText.replace(regex, "小思");
     if (spoken.length == 0) {
-        message.prepare(packet, `你不能给老人机发送一条空白的消息哦~\n老人机目前还无法理解除文字外的信息.`, true).send();
+        message.prepare(packet, `你不能给老人机发送一条空白的消息哦~\n老人机目前还无法理解除文字外的信息.`, false).send();
         return false;
     }
     var url = encodeURI(`https://api.ownthink.com/bot?appid=${apikey}&spoken=${spoken}&userid=${packet.sender.user_id}`);
@@ -85,7 +85,7 @@ function chatbot(packet) {
         }
         var msg = `${response.data.info.text.replace(/小思/g, "老人机")}`;
         if (packet.message_type === "group") {
-            message.prepare(packet, `${msg}\n\n提示：这是未匹配到任何功能时的默认聊天回复，如若要查看机器人支持的功能，请发送"帮助".`, true).send();
+            message.prepare(packet, `${msg}\n\n提示：这是未匹配到任何功能时的默认聊天回复，如若要查看机器人支持的功能，请发送"帮助".`, false).send();
         } else {
             message.prepare(packet, `${msg}\n\n提示：这是未匹配到任何功能时的默认聊天回复，如若要查看机器人支持的功能，请发送"帮助".`).send();
         }

@@ -60,10 +60,20 @@ function displayHelpInfo(packet) {
     for (key in SUPER_COMMAND_REGISTRY) {
         if (SUPER_COMMAND_REGISTRY[key]["requirePermission"] === true) {
             if (userPermission) {
-                if (SUPER_COMMAND_REGISTRY[key]["argument"] === "") {
-                    msg += `#${key}\n${SUPER_COMMAND_REGISTRY[key]["description"]}\n本条指令仅群组创建者/管理员可用\n\n`;
+                if (SUPER_COMMAND_REGISTRY[key]["requireSuperPermission"] === true) {
+                    if (message.isGlobalAdministrator(packet.sender.user_id) === true) {
+                        if (SUPER_COMMAND_REGISTRY[key]["argument"] === "") {
+                            msg += `#${key}\n${SUPER_COMMAND_REGISTRY[key]["description"]}\n本条指令仅全局超管可用\n\n`;
+                        } else {
+                            msg += `#${key} ${SUPER_COMMAND_REGISTRY[key]["argument"]}\n${SUPER_COMMAND_REGISTRY[key]["description"]}\n本条指令仅全局超管可用\n\n`;
+                        }
+                    }
                 } else {
-                    msg += `#${key} ${SUPER_COMMAND_REGISTRY[key]["argument"]}\n${SUPER_COMMAND_REGISTRY[key]["description"]}\n本条指令仅群组创建者/管理员可用\n\n`;
+                    if (SUPER_COMMAND_REGISTRY[key]["argument"] === "") {
+                        msg += `#${key}\n${SUPER_COMMAND_REGISTRY[key]["description"]}\n本条指令仅群组创建者/管理员可用\n\n`;
+                    } else {
+                        msg += `#${key} ${SUPER_COMMAND_REGISTRY[key]["argument"]}\n${SUPER_COMMAND_REGISTRY[key]["description"]}\n本条指令仅群组创建者/管理员可用\n\n`;
+                    }
                 }
             }
         } else {

@@ -134,8 +134,12 @@ function unique(arr) {
     return Array.from(new Set(arr))
 }
 
-function formatTime(seconds) {
-    var date = new Date(parseFloat(seconds + "000"));
+function formatTime(seconds = null) {
+    if (seconds === null) {
+        var date = (new Date()).getTime();
+    } else {
+        var date = new Date(parseFloat(seconds + "000"));
+    }
     return (
         date.getFullYear()
         + "-" +
