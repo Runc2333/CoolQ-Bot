@@ -154,16 +154,17 @@ for (i = 0; i < plugins.length; i++) {
 }
 log.write("用户插件载入完毕.", "MAIN THREAD", "INFO");
 
-// /* 检查权限 */
+/* 检查权限 */
 // log.write("开始检查群组权限...", "MAIN THREAD", "INFO");
 // message.getGroupList().forEach(function (item) {
-//     if (message.checkSelfPermission(item.group_id) === false) {
-//         console.log(`Group: ${item.group_id} NO PERMISSION.`);
-//         // message.send("group", item.group_id, `[警告] 老人机没有本群的管理权限，以下功能将不会生效：\n1. 文本/图片内容审核: 过滤广告/色情/政治敏感信息\n2. 入群验证: 过滤批量加群的机器人\n3. 退群提示: 在群内广播成员退群信息，拉黑主动退群成员(可选)\n欢迎将我添加至其他群组，以快速获取入群验证、入群欢迎、广告过滤、每日抽签、灵魂鸡汤、智障聊天、正则关键词匹配、QQ炫舞爆点查询等能力`);
-//         message.send("group", item.group_id, `[警告] 老人机没有本群的管理权限，部分功能可能不会生效.`);
-//         message.send("group", item.group_id, `老人机已被更新，本次改动如下：\n1、更新了S6赛季所有模式的爆点数据, 现已可查询到S6赛季的新歌数据.\n2、新增"锁定群名片"功能，可锁定群成员的群名片，详细请参阅"#指令帮助".\n\nBug反馈、功能定制(免费)联系Runc(814537405).`);
-//     } else {
-//         console.log(`Group: ${item.group_id} GRANTED.`);
-//         message.send("group", item.group_id, `老人机已被更新，本次改动如下：\n1、更新了S6赛季所有模式的爆点数据, 现已可查询到S6赛季的新歌数据.\n2、新增"锁定群名片"功能，可锁定群成员的群名片，详细请参阅"#指令帮助".\n\nBug反馈、功能定制(免费)联系Runc(814537405).`);
-//     }
+//     message.checkSelfPermission(item.group_id, (permission) => {
+//         if (permission) {
+//             console.log(`Group: ${item.group_id} GRANTED.`);
+//             message.send("group", item.group_id, `老人机已被更新，本次改动如下：\n1、将爆气数据置入本地，尽可能降低对网页数据的依赖，提升查询速度.\n2、支持更为模糊的搜索，现在可使用同音字/同声母字进行查询，如使用关键词"好笑带声嗦西环你"可查询到"好想大声说喜欢你"，降低因手滑打错字造成的查询失败率.\nBug反馈、功能定制(免费)联系Runc(814537405).`);
+//         } else {
+//             console.log(`Group: ${item.group_id} NO PERMISSION.`);
+//             message.send("group", item.group_id, `[警告] 老人机没有本群的管理权限，部分功能可能不会生效.`);
+//             message.send("group", item.group_id, `老人机已被更新，本次改动如下：\n1、将爆气数据置入本地，尽可能降低对网页数据的依赖，提升查询速度.\n2、支持更为模糊的搜索，现在可使用同音字/同声母字进行查询，如使用关键词"好笑带声嗦西环你"可查询到"好想大声说喜欢你"，降低因手滑打错字造成的查询失败率.\nBug反馈、功能定制(免费)联系Runc(814537405).`);
+//         }
+//     });
 // });

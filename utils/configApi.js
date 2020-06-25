@@ -41,11 +41,14 @@ function get(section, field = null) {
 }
 
 function write(section, data, field = null) {
+	var bakurl = `${configBakPath}/${(new Date()).getTime()}_config.json.bak`;
 	var configObject = readFileConfigIntoObject();
+	var configString = JSON.stringify(configObject, null, "\t");//格式化json
 	try {
-		fs.writeFileSync(`${configBakPath}/${tool.formatTime(null)}_config.json.bak`, configString);//写入
+		fs.writeFileSync(bakurl, configString);//写入
 	} catch (e) {
-		log.write("无法写入配置文件: config/config.json!", "CONFIG API", "ERROR");
+		log.write(`无法写入备份配置文件: ${bakurl}!`, "CONFIG API", "ERROR");
+		console.error(e);
 		process.exit(true);
 	}
 	if (field === null) {

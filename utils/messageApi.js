@@ -2,6 +2,7 @@
 const processPath = process.cwd().replace(/\\/g, "/");//程序运行路径
 /* 模块 */
 const request = require("sync-request");//同步网络请求
+const async_request = require('request');//异步网络请求
 const log = require(`${processPath}/utils/logger.js`);//日志
 const config = require(`${processPath}/utils/configApi.js`);//设置
 const db = require(`${processPath}/utils/database.js`);//数据库
@@ -17,86 +18,111 @@ const API_HOST = config.get("GLOBAL", "API_HOST");
 const API_HTTP_PORT = config.get("GLOBAL", "API_HTTP_PORT");
 const ACCESS_TOKEN = config.get("GLOBAL", "ACCESS_TOKEN");
 
-function send(type, uid, msg, escape = false, async = true) {
-    var data = {};
-    switch (type) {
-        case "group":
-            data.message_type = "group";
-            data.group_id = uid;
-            break;
-        case "private":
-            data.message_type = "private";
-            data.user_id = uid;
-            break;
-        case "discuss":
-            data.message_type = "discuss";
-            data.discuss_id = uid;
-            break;
-        default:
-            log.write("消息发送失败:传入的参数类型不受支持.", "MESSAGE API", "WARNING");
-            return false;
+const idMap = {
+    group: "group_id",
+    private: "user_id",
+    discuss: "discuss_id",
+}
+
+function send(type, uid, msg, escape = false, callback = null) {
+    if (typeof (idMap[type]) === "undefined") {
+        log.write("消息发送失败:传入的参数类型不受支持.", "MESSAGE API", "WARNING");
+        return false;
     }
-    data.message = msg;
-    data.auto_escape = escape === true ? true : false;
+    var async = typeof (callback) === "function" ? false : true;
     if (async === false) {
         var url = `http://${API_HOST}:${API_HTTP_PORT}/send_msg?access_token=${ACCESS_TOKEN}`;
     } else {
         var url = `http://${API_HOST}:${API_HTTP_PORT}/send_msg_async?access_token=${ACCESS_TOKEN}`;
     }
-    var res = request("POST", url, {
-        json: data
-    });
-    try {
-        var response = JSON.parse(res.getBody("utf8"));
-    } catch (e) {
-        console.log(res.getBody("utf8"));
-        log.write("无法解析服务器返回的数据.", "MESSAGE API] [消息发送失败", "WARNING");
-        log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [消息发送失败", "WARNING");
-        return false;
-    }
-    if (response.retcode == async === false ? 0 : 1) {
-        if (async === false) {
-            log.write(`送往<${uid}>: <${msg}>.`, "MESSAGE API] [消息已送达", "INFO");
+    var postdata = {
+        message_type: type,
+        message: msg,
+        auto_escape: escape === true ? true : false
+    };
+    postdata[idMap[type]] = uid;
+    async_request.post({
+        'url': url,
+        json: postdata
+    }, function (_e, _r, body) {
+        if (body.retcode == async === false ? 0 : 1) {
+            if (async === false) {
+                log.write(`送往<${uid}>: <${msg}>.`, "MESSAGE API] [消息已送达", "INFO");
+                switch (type) {
+                    case "group":
+                        db.saveMessageIntoDatabase({
+                            type: type,
+                            content: msg,
+                            groupId: uid,
+                            userId: BOT_QQNUM,
+                            messageId: body.data.message_id
+                        });
+                        break;
+                    case "discuss":
+                        db.saveMessageIntoDatabase({
+                            type: type,
+                            content: msg,
+                            groupId: uid,
+                            userId: BOT_QQNUM,
+                            messageId: body.data.message_id
+                        });
+                        break;
+                    case "private":
+                        db.saveMessageIntoDatabase({
+                            type: type,
+                            content: msg,
+                            userId: uid,
+                            sender: BOT_QQNUM,
+                            messageId: body.data.message_id
+                        });
+                        break;
+                    default:
+                        log.write("遇到了不支持的消息类型.", "MAIN THREAD", "ERROR");
+                        break;
+                }
+                callback(body.data.message_id);
+            } else {
+                log.write(`送往<${uid}>: <${msg}>.`, "MESSAGE API] [消息已放入异步队列", "INFO");
+                switch (type) {
+                    case "group":
+                        db.saveMessageIntoDatabase({
+                            type: type,
+                            content: msg,
+                            groupId: uid,
+                            userId: BOT_QQNUM,
+                            messageId: "async"
+                        });
+                        break;
+                    case "discuss":
+                        db.saveMessageIntoDatabase({
+                            type: type,
+                            content: msg,
+                            groupId: uid,
+                            userId: BOT_QQNUM,
+                            messageId: "async"
+                        });
+                        break;
+                    case "private":
+                        db.saveMessageIntoDatabase({
+                            type: type,
+                            content: msg,
+                            userId: uid,
+                            sender: BOT_QQNUM,
+                            messageId: "async"
+                        });
+                        break;
+                    default:
+                        log.write("遇到了不支持的消息类型.", "MAIN THREAD", "ERROR");
+                        break;
+                }
+            }
+
         } else {
-            log.write(`送往<${uid}>: <${msg}>.`, "MESSAGE API] [消息已放入异步队列", "INFO");
+            console.log(body);
+            log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [消息发送失败", "WARNING");
+            return false;
         }
-        switch (type) {
-            case "group":
-                db.saveMessageIntoDatabase({
-                    type: type,
-                    content: msg,
-                    groupId: uid,
-                    userId: BOT_QQNUM,
-                    messageId: "async"
-                });
-                break;
-            case "discuss":
-                db.saveMessageIntoDatabase({
-                    type: type,
-                    content: msg,
-                    groupId: uid,
-                    userId: BOT_QQNUM,
-                    messageId: "async"
-                });
-                break;
-            case "private":
-                db.saveMessageIntoDatabase({
-                    type: type,
-                    content: msg,
-                    userId: uid,
-                    sender: BOT_QQNUM,
-                    messageId: "async"
-                });
-                break;
-            default:
-                log.write("遇到了不支持的消息类型.", "MAIN THREAD", "ERROR");
-                break;
-        }
-    } else {
-        console.log(res.getBody("utf8"));
-        log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [消息发送失败", "WARNING");
-        return false;
-    }
+    });
 }
 
 function prepare(packet, message, at = false) {
@@ -380,31 +406,26 @@ function checkSuperPermission(packet) {
     return true;
 }
 
-function checkSelfPermission(gid) {
-    var data = {};
-    data.group_id = gid;
-    data.user_id = config.get("GLOBAL", "BOT_QQNUM");
-    data.no_cache = true;
+function checkSelfPermission(gid, callback) {
     var url = `http://${API_HOST}:${API_HTTP_PORT}/get_group_member_info?access_token=${ACCESS_TOKEN}`;
-    var res = request("POST", url, {
-        json: data
+    var postdata = {
+        group_id: gid,
+        user_id: BOT_QQNUM,
+        no_cache: true
+    };
+    async_request.post({
+        'url': url,
+        json: postdata
+    }, function (_e, _r, body) {
+        if (body.retcode == 0) {
+            log.write(`成功获取机器人权限`, "MESSAGE API", "INFO");
+            callback(body.data.role == "member" ? false : true)
+        } else {
+            console.log(body);
+            log.write(`Ret:<${body.retcode}>`, "MESSAGE API] [获取机器人权限失败", "WARNING");
+            return false;
+        }
     });
-    try {
-        var response = JSON.parse(res.getBody("utf8"));
-    } catch (e) {
-        console.log(res.getBody("utf8"));
-        log.write("无法解析服务器返回的数据.", "MESSAGE API] [获取机器人权限失败", "WARNING");
-        log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [获取机器人权限失败", "WARNING");
-        return false;
-    }
-    if (response.retcode == 0) {
-        log.write(`成功获取机器人权限`, "MESSAGE API", "INFO");
-        return response.data.role == "member" ? false : true;
-    } else {
-        console.log(res.getBody("utf8"));
-        log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [获取机器人权限失败", "WARNING");
-        return false;
-    }
 }
 
 function isGlobalAdministrator(uin) {

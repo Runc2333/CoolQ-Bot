@@ -1,4 +1,5 @@
 /config/config.json
+/config/bak
 /node_modules
 *.log
 /plugins/guide.js
@@ -8,3 +9,4 @@ sample.txt
 *.png
 test.js
 *.db
+test2.js

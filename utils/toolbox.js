@@ -136,7 +136,7 @@ function unique(arr) {
 
 function formatTime(seconds = null) {
     if (seconds === null) {
-        var date = (new Date()).getTime();
+        var date = new Date();
     } else {
         var date = new Date(parseFloat(seconds + "000"));
     }

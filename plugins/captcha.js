@@ -83,56 +83,59 @@ function init() {
 }
 
 function captcha(packet) {
-    if (message.checkSelfPermission(packet.group_id) === false) {
-        message.prepare(packet, `欢迎加入群聊！\n因无管理员权限，入群验证能力已停用.`, true).send();
-        return false;
-    }
-    var captchaImage = svgCaptcha.create({
-        size: 6,
-        ignoreChars: "iIlLoOq10WMVwmvDUuVvaAsSdDfFQ",
-        noise: 2,
-        background: "#FFFFFF",
-        color: false
-    });
-    sharp(Buffer.from(captchaImage.data)).png().toBuffer().then(function (info) {
-        var imageBase64 = `base64://${info.toString("base64")}`;
-        var PENDING_CAPTCHA = config.get("CAPTCHA", "PENDING_CAPTCHA");
-        PENDING_CAPTCHA.push({
-            group: packet.group_id.toString(),
-            userId: packet.user_id.toString(),
-            text: captchaImage.text.toLowerCase(),
-            image: imageBase64
-        });
-        // console.log(PENDING_CAPTCHA);
-        config.write("CAPTCHA", PENDING_CAPTCHA, "PENDING_CAPTCHA");
-        message.prepare(packet, `欢迎加入群聊！\n请在600秒内发送下图中的验证码，不区分大小写.\n若超时未发送, 您将会被移出群聊.${cqcode.image(imageBase64)}\n发送"换一张"可更换一张验证码.`, true).send();
-        setTimeout(function () {
-            var PENDING_CAPTCHA = config.get("CAPTCHA", "PENDING_CAPTCHA");
-            for (key in PENDING_CAPTCHA) {
-                if (PENDING_CAPTCHA[key].userId == packet.user_id.toString() && PENDING_CAPTCHA[key].group == packet.group_id.toString()) {
-                    message.prepare(packet, `您将在300秒后被移出群组，若要避免，请发送下图中的验证码，不区分大小写.${cqcode.image(imageBase64)}\n发送"换一张"可更换一张验证码.`, true).send();
-                    // console.log("Timer1 Done.");
-                    return true;
-                }
-            }
-        }, 300 * 1000);
-        setTimeout(function () {
-            var PENDING_CAPTCHA = config.get("CAPTCHA", "PENDING_CAPTCHA");
-            for (key in PENDING_CAPTCHA) {
-                if (PENDING_CAPTCHA[key].userId == packet.user_id.toString() && PENDING_CAPTCHA[key].group == packet.group_id.toString()) {
-                    message.prepare(packet, `您已因超时未验证被移出群聊，若有需要，您可重新申请加入.`, true).send();
-                    PENDING_CAPTCHA.splice(key, 1);
-                    config.write("CAPTCHA", PENDING_CAPTCHA, "PENDING_CAPTCHA");
-                    setTimeout(function () {
-                        message.kick(packet.group_id, packet.user_id);
-                    }, 5000);
-                    return true;
-                }
-            }
-        }, 600 * 1000);
-    }).catch(function (err) {
-        console.log(err);
-        message.prepare(packet, `后端错误: 未能生成验证码图片.`, true).send();
+    message.checkSelfPermission(packet.group_id, (permission) => {
+        if (permission) {
+            var captchaImage = svgCaptcha.create({
+                size: 6,
+                ignoreChars: "iIlLoOq10WMVwmvDUuVvaAsSdDfFQ",
+                noise: 2,
+                background: "#FFFFFF",
+                color: false
+            });
+            sharp(Buffer.from(captchaImage.data)).png().toBuffer().then(function (info) {
+                var imageBase64 = `base64://${info.toString("base64")}`;
+                var PENDING_CAPTCHA = config.get("CAPTCHA", "PENDING_CAPTCHA");
+                PENDING_CAPTCHA.push({
+                    group: packet.group_id.toString(),
+                    userId: packet.user_id.toString(),
+                    text: captchaImage.text.toLowerCase(),
+                    image: imageBase64
+                });
+                // console.log(PENDING_CAPTCHA);
+                config.write("CAPTCHA", PENDING_CAPTCHA, "PENDING_CAPTCHA");
+                message.prepare(packet, `欢迎加入群聊！\n请在600秒内发送下图中的验证码，不区分大小写.\n若超时未发送, 您将会被移出群聊.${cqcode.image(imageBase64)}\n发送"换一张"可更换一张验证码.`, true).send();
+                setTimeout(function () {
+                    var PENDING_CAPTCHA = config.get("CAPTCHA", "PENDING_CAPTCHA");
+                    for (key in PENDING_CAPTCHA) {
+                        if (PENDING_CAPTCHA[key].userId == packet.user_id.toString() && PENDING_CAPTCHA[key].group == packet.group_id.toString()) {
+                            message.prepare(packet, `您将在300秒后被移出群组，若要避免，请发送下图中的验证码，不区分大小写.${cqcode.image(imageBase64)}\n发送"换一张"可更换一张验证码.`, true).send();
+                            // console.log("Timer1 Done.");
+                            return true;
+                        }
+                    }
+                }, 300 * 1000);
+                setTimeout(function () {
+                    var PENDING_CAPTCHA = config.get("CAPTCHA", "PENDING_CAPTCHA");
+                    for (key in PENDING_CAPTCHA) {
+                        if (PENDING_CAPTCHA[key].userId == packet.user_id.toString() && PENDING_CAPTCHA[key].group == packet.group_id.toString()) {
+                            message.prepare(packet, `您已因超时未验证被移出群聊，若有需要，您可重新申请加入.`, true).send();
+                            PENDING_CAPTCHA.splice(key, 1);
+                            config.write("CAPTCHA", PENDING_CAPTCHA, "PENDING_CAPTCHA");
+                            setTimeout(function () {
+                                message.kick(packet.group_id, packet.user_id);
+                            }, 5000);
+                            return true;
+                        }
+                    }
+                }, 600 * 1000);
+            }).catch(function (err) {
+                console.log(err);
+                message.prepare(packet, `后端错误: 未能生成验证码图片.`, true).send();
+            });
+        } else {
+            message.prepare(packet, `欢迎加入群聊！\n因无管理员权限，入群验证能力已停用.`, true).send();
+            return false;
+        }
     });
 }
 
