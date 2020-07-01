@@ -4,11 +4,16 @@ const configFilePath = `${processPath}/config/config.json`;//配置文件路径
 const configBakPath = `${processPath}/config/bak`;//配置文件备份路径
 /* 模块 */
 const fs = require("fs");//文件系统读写
+const db = require(`${processPath}/utils/database.js`);
+const Database = require("better-sqlite3"); // SQLite3驱动程序
+const lodash = require("lodash"); // lodash
 const log = require(`${processPath}/utils/logger.js`);//日志
 const tool = require(`${processPath}/utils/toolbox.js`);
 // const message = require(`${processPath}/utils/messageApi.js`);//消息接口
 
-function readFileConfigIntoObject() {
+const configDatabase = db.getDatabase("config");
+
+function checkDatabase() {
 	try {
 		var configFile = fs.readFileSync(configFilePath);//读入配置文件
 	} catch (e) {
@@ -23,45 +28,91 @@ function readFileConfigIntoObject() {
 		log.write("请检查JSON语法.", "CONFIG API", "ERROR");
 		process.exit(true);//退出进程
 	}
-	return configObject;
+	for (key in configObject) {
+		if (configDatabase.prepare(`SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = '${key}'`).all()[0]["count(*)"] === 0) {
+			configDatabase.prepare(`CREATE TABLE \`${key}\` (\`NAME\` TEXT NOT NULL PRIMARY KEY, \`JSON\` TEXT NOT NULL)`).run();
+		}
+		for (key2 in configObject[key]) {
+			configDatabase.prepare(`INSERT INTO \`${key}\` (NAME, JSON) VALUES (?, ?);`).run(
+				key2,
+				JSON.stringify(configObject[key][key2])
+			);
+		}
+	}
 }
 
 function get(section, field = null) {
-	var configObject = readFileConfigIntoObject();
-	try {
-		if (field === null) {
-			var required = configObject[section];
-		} else {
-			var required = configObject[section][field];
-		}
-	} catch (e) {
-		var required = undefined;
+	if (configDatabase.prepare(`SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = '${section}'`).all()[0]["count(*)"] === 0) {
+		return false
 	}
-	return required === undefined ? false : required;
+	if (field !== null) {
+		var data = configDatabase.prepare(`SELECT * FROM ${section} WHERE \`NAME\` = '${field}'`).all();
+		if (data.length === 0) {
+			return false;
+		}
+		try {
+			var dataToReturn = JSON.parse(data[0].JSON);
+		} catch (e) {
+			console.log(e);
+			console.log(data);
+			log.write("无法解析JSON!", "CONFIG API", "ERROR");
+			process.exit();
+		}
+	} else {
+		var data = configDatabase.prepare(`SELECT * FROM ${section}`).all();
+		if (data.length === 0) {
+			return false;
+		}
+		var dataToReturn = {};
+		data.forEach((v) => {
+			dataToReturn[v.NAME] = JSON.parse(v.JSON);
+		});
+	}
+	return dataToReturn;
 }
 
 function write(section, data, field = null) {
-	var bakurl = `${configBakPath}/${(new Date()).getTime()}_config.json.bak`;
-	var configObject = readFileConfigIntoObject();
-	var configString = JSON.stringify(configObject, null, "\t");//格式化json
-	try {
-		fs.writeFileSync(bakurl, configString);//写入
-	} catch (e) {
-		log.write(`无法写入备份配置文件: ${bakurl}!`, "CONFIG API", "ERROR");
-		console.error(e);
-		process.exit(true);
+	if (configDatabase.prepare(`SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = '${section}'`).all()[0]["count(*)"] === 0) {
+		configDatabase.prepare(`CREATE TABLE \`${section}\` (\`NAME\` TEXT NOT NULL PRIMARY KEY, \`JSON\` TEXT NOT NULL)`).run();
 	}
-	if (field === null) {
-		configObject[section] = data;//填入数据
+	if (field !== null) {
+		try {
+			var dataToWrite = JSON.stringify(data);
+		} catch (e) {
+			console.log(e);
+			log.write("无法序列化JSON!", "CONFIG API", "ERROR");
+			process.exit();
+		}
+		try {
+			configDatabase.prepare(`REPLACE INTO ${section} (NAME, JSON) VALUES (?, ?)`).run(
+				field,
+				dataToWrite
+			);
+		} catch (e) {
+			console.log(e);
+			log.write("无法写入数据库!", "CONFIG API", "ERROR");
+			process.exit();
+		}
 	} else {
-		configObject[section][field] = data;//填入数据
-	}
-	var configString = JSON.stringify(configObject, null, "\t");//格式化json
-	try {
-		fs.writeFileSync(configFilePath, configString);//写入
-	} catch (e) {
-		log.write("无法写入配置文件: config/config.json!", "CONFIG API", "ERROR");
-		process.exit(true);
+		for (key in data) {
+			try {
+				var dataToWrite = JSON.stringify(data[key]);
+			} catch (e) {
+				console.log(e);
+				log.write("无法序列化JSON!", "CONFIG API", "ERROR");
+				process.exit();
+			}
+			try {
+				configDatabase.prepare(`REPLACE INTO ${section} (NAME, JSON) VALUES (?, ?)`).run(
+					key,
+					dataToWrite
+				);
+			} catch (e) {
+				console.log(e);
+				log.write("无法写入数据库!", "CONFIG API", "ERROR");
+				process.exit();
+			}
+		}
 	}
 }
 
@@ -81,24 +132,36 @@ function registerPlugin(arguments) {
 							"script": arguments.script,
 							"handler": arguments.handler,
 							"regex": arguments.regex,
-							"notification": arguments.notification === false ? false : true
+							"notification": arguments.notification === false ? false : true,
+							"priority": typeof (arguments.priority) === "undefined" ? 0 : arguments.priority
 						});
+						config["GROUP_MESSAGE"] = lodash.sortBy(config["GROUP_MESSAGE"], (o) => {
+							return o.priority;
+						}).reverse();
 						break;
 					case "privateMessage"://私聊消息
 						config["PRIVATE_MESSAGE"].push({
 							"script": arguments.script,
 							"handler": arguments.handler,
 							"regex": arguments.regex,
-							"notification": arguments.notification === false ? false : true
+							"notification": arguments.notification === false ? false : true,
+							"priority": typeof (arguments.priority) === "undefined" ? 0 : arguments.priority
 						});
+						config["PRIVATE_MESSAGE"] = lodash.sortBy(config["PRIVATE_MESSAGE"], (o) => {
+							return o.priority;
+						}).reverse();
 						break;
 					case "discussMessage"://讨论组消息
 						config["DISCUSS_MESSAGE"].push({
 							"script": arguments.script,
 							"handler": arguments.handler,
 							"regex": arguments.regex,
-							"notification": arguments.notification === false ? false : true
+							"notification": arguments.notification === false ? false : true,
+							"priority": typeof (arguments.priority) === "undefined" ? 0 : arguments.priority
 						});
+						config["DISCUSS_MESSAGE"] = lodash.sortBy(config["DISCUSS_MESSAGE"], (o) => {
+							return o.priority;
+						}).reverse();
 						break;
 					default:
 						log.write("未能注册插件: 提供的注册模式不受支持.", "CONFIG API", "WARNING");
@@ -107,7 +170,7 @@ function registerPlugin(arguments) {
 			}
 			write("GLOBAL", config, "MESSAGE_REGISTRY");
 			if (arguments.notification === false) {
-				log.write("警告: 插件开发者希望隐藏转发处理提示, 您将不会看到有关消息转发给此插件的提示.", "CONFIG API", "WARNING");
+				log.write("插件开发者希望隐藏转发处理提示, 您将不会看到有关消息转发给此插件的提示.", "CONFIG API", "INFO");
 			}
 			break;
 		case "notice":
@@ -187,8 +250,8 @@ function registerPlugin(arguments) {
 			return false;
 	}
 	var config = get("GLOBAL", "PLUGIN_REGISTRY");
-	if (!arguments.skip) {
-		if (typeof (config[arguments.script]) === "undefined") {
+	if (arguments.visible || typeof (arguments.visible) !== "undefined") {
+		if (typeof (config[arguments.script]) === "undefined" && config[arguments.script] !== "该插件开发者未填写描述.") {
 			config[arguments.script] = typeof (arguments.description) !== "undefined" ? arguments.description : "该插件开发者未填写描述.";
 			write("GLOBAL", config, "PLUGIN_REGISTRY");
 		}
@@ -216,7 +279,7 @@ function registerSuperCommand(arguments) {
 	config[arguments.command]["requireSuperPermission"] = arguments.requireSuperPermission === true ? true : false;
 	config[arguments.command]["description"] = typeof (arguments.description) !== "undefined" ? arguments.description : "";
 	write("GLOBAL", config, "SUPER_COMMAND_REGISTRY");
-	if (!arguments.skip) {
+	if (arguments.visible || typeof (arguments.visible) !== "undefined") {
 		var config = get("GLOBAL", "PLUGIN_REGISTRY");
 		if (typeof (config[arguments.script]) === "undefined") {
 			config[arguments.script] = "该插件开发者未填写描述.";
@@ -411,6 +474,7 @@ write("GLOBAL", { GROUP_MESSAGE: [], PRIVATE_MESSAGE: [], DISCUSS_MESSAGE: [] },
 write("GLOBAL", { GROUP_UPLOAD: [], GROUP_ADMIN: [], GROUP_INCREASE: [], GROUP_DECREASE: [], GROUP_BAN: [], FRIEND_ADD: [] }, "NOTICE_REGISTRY");
 write("GLOBAL", { FRIEND: [], GROUP: [] }, "REQUEST_REGISTRY");
 write("GLOBAL", {}, "SUPER_COMMAND_REGISTRY");
+// checkDatabase();
 
 module.exports = {
 	get,

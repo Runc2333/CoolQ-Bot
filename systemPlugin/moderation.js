@@ -19,7 +19,7 @@ config.registerPlugin({
     regex: "/./",
     description: "审核群聊内容，自动过滤违规信息.",
     notification: false,
-    skip: false
+    visible: true
 });
 if (config.get("GLOBAL", "HUAWEI_CLOUD_APP_KEY") === false || config.get("GLOBAL", "HUAWEI_CLOUD_APP_SECRET") === false) {
     log.write("未找到APP_KEY，信息检测功能将不会运行.", "信息检测", "ERROR");

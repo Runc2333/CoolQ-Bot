@@ -18,9 +18,9 @@ const superCommandHandler = require(`${processPath}/systemPlugin/superCommand.js
 
 /* 打印程序信息 */
 log.write("**********************************************", "MAIN THREAD", "INFO");
-log.write("*              CoolQ-Bot v0.1.0              *", "MAIN THREAD", "INFO");
+log.write("*              CoolQ-Bot v0.1.3              *", "MAIN THREAD", "INFO");
 log.write("*             Written In Node.js             *", "MAIN THREAD", "INFO");
-log.write("*              Build:2020.06.01              *", "MAIN THREAD", "INFO");
+log.write("*              Build:2020.07.01              *", "MAIN THREAD", "INFO");
 log.write("*              Author: Runc2333              *", "MAIN THREAD", "INFO");
 log.write("**********************************************", "MAIN THREAD", "INFO");
 
@@ -52,12 +52,6 @@ bot.connect();
 //连接建立事件
 bot.on("ready", function () {
     log.write("到后端服务器的WebSocket连接已成功建立.", "MAIN THREAD", "INFO");
-    // message.getGroupList().forEach(function (item) {
-    //     message.send("group", item.group_id, `后端进程已启动或已被重载.\n机器人服务已恢复可用.`);
-    // });
-    // GLOBAL_ADMINISTRATORS.forEach(function (item) {
-    //     message.send("private", item, "后端进程已启动或已被重载.\n机器人服务已恢复可用.");
-    // });
 });
 
 //收到消息
@@ -108,35 +102,21 @@ bot.on("notice", function (packet) {
         return false;
     }
     noticeHandler.handle(packet);
-    // console.log(packet);
 })
 
 //收到请求
 bot.on("request", function (packet) {
     requestHandler.handle(packet);
-    // console.log(packet);
 })
 
 /* 程序退出事件 */
 process.on("exit", (code) => {
-    // message.getGroupList().forEach(function (item) {
-    //     message.send("group", item.group_id, `后端进程已捕获到终止指令，正在退出.\n机器人服务将暂时不可用.`);
-    // });
-    // GLOBAL_ADMINISTRATORS.forEach(function (item) {
-    //     message.send("private", item, `后端进程已捕获到终止指令，正在退出.\n机器人服务将暂时不可用.`);
-    // });
     log.write("正在退出进程...", "进程结束", "INFO");
 });
 
 /* 捕获异常 */
 process.on("uncaughtException", function (err) {
     console.log(`Caught exception: ${err}`);
-    // message.getGroupList().forEach(function (item) {
-    //     message.send("group", item.group_id, `后端进程在运行中捕获到了一个异常, 请尽快查看日志.错误详情: \n${err}`);
-    // });
-    // GLOBAL_ADMINISTRATORS.forEach(function (item) {
-    //     message.send("private", item, `后端进程在运行中捕获到了一个异常, 请尽快查看日志.错误详情: \n${err}`);
-    // });
 });
 
 /* 载入插件 */
@@ -153,18 +133,3 @@ for (i = 0; i < plugins.length; i++) {
     log.write(`插件<${plugins[i].split(".")[0]}>初始化成功.`, "MAIN THREAD", "INFO");
 }
 log.write("用户插件载入完毕.", "MAIN THREAD", "INFO");
-
-/* 检查权限 */
-// log.write("开始检查群组权限...", "MAIN THREAD", "INFO");
-// message.getGroupList().forEach(function (item) {
-//     message.checkSelfPermission(item.group_id, (permission) => {
-//         if (permission) {
-//             console.log(`Group: ${item.group_id} GRANTED.`);
-//             message.send("group", item.group_id, `老人机已被更新，本次改动如下：\n1、将爆气数据置入本地，尽可能降低对网页数据的依赖，提升查询速度.\n2、支持更为模糊的搜索，现在可使用同音字/同声母字进行查询，如使用关键词"好笑带声嗦西环你"可查询到"好想大声说喜欢你"，降低因手滑打错字造成的查询失败率.\nBug反馈、功能定制(免费)联系Runc(814537405).`);
-//         } else {
-//             console.log(`Group: ${item.group_id} NO PERMISSION.`);
-//             message.send("group", item.group_id, `[警告] 老人机没有本群的管理权限，部分功能可能不会生效.`);
-//             message.send("group", item.group_id, `老人机已被更新，本次改动如下：\n1、将爆气数据置入本地，尽可能降低对网页数据的依赖，提升查询速度.\n2、支持更为模糊的搜索，现在可使用同音字/同声母字进行查询，如使用关键词"好笑带声嗦西环你"可查询到"好想大声说喜欢你"，降低因手滑打错字造成的查询失败率.\nBug反馈、功能定制(免费)联系Runc(814537405).`);
-//         }
-//     });
-// });

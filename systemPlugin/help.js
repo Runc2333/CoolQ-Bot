@@ -12,17 +12,17 @@ config.registerPlugin({
     script: "../systemPlugin/help.js",
     handler: "saySorry",
     regex: "/^#指令帮助$/",
-    skip: true
+    visible: false
 });
 config.registerPlugin({
     type: "message",
     subType: "groupMessage, discussMessage, privateMessage",
     script: "../systemPlugin/help.js",
     handler: "displayReadableHelpInfo",
-    regex: "/(帮助|教程|说明|菜单|机器人菜单|机器人说明|机器人帮助|机器人教程)/",
+    regex: "/^(帮助|教程|说明|菜单)|(帮助|教程|说明|菜单)$/",
     description: "显示机器人支持的功能~",
     notification: false,
-    skip: true
+    visible: false
 });
 config.registerSuperCommand({
     command: "指令帮助",
@@ -30,7 +30,7 @@ config.registerSuperCommand({
     handler: "displayHelpInfo",
     argument: "",
     description: "显示指令帮助.",
-    skip: true
+    visible: false
 });
 config.registerSuperCommand({
     command: "插件",
@@ -38,7 +38,7 @@ config.registerSuperCommand({
     handler: "displayPluginInfo",
     argument: "",
     description: "显示注册到系统的插件.",
-    skip: true
+    visible: false
 });
 
 function saySorry(packet) {

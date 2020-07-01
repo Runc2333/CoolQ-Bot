@@ -29,12 +29,7 @@ function send(type, uid, msg, escape = false, callback = null) {
         log.write("消息发送失败:传入的参数类型不受支持.", "MESSAGE API", "WARNING");
         return false;
     }
-    var async = typeof (callback) === "function" ? false : true;
-    if (async === false) {
-        var url = `http://${API_HOST}:${API_HTTP_PORT}/send_msg?access_token=${ACCESS_TOKEN}`;
-    } else {
-        var url = `http://${API_HOST}:${API_HTTP_PORT}/send_msg_async?access_token=${ACCESS_TOKEN}`;
-    }
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/send_msg?access_token=${ACCESS_TOKEN}`;
     var postdata = {
         message_type: type,
         message: msg,
@@ -45,85 +40,165 @@ function send(type, uid, msg, escape = false, callback = null) {
         'url': url,
         json: postdata
     }, function (_e, _r, body) {
-        if (body.retcode == async === false ? 0 : 1) {
-            if (async === false) {
-                log.write(`送往<${uid}>: <${msg}>.`, "MESSAGE API] [消息已送达", "INFO");
-                switch (type) {
-                    case "group":
-                        db.saveMessageIntoDatabase({
-                            type: type,
-                            content: msg,
-                            groupId: uid,
-                            userId: BOT_QQNUM,
-                            messageId: body.data.message_id
-                        });
-                        break;
-                    case "discuss":
-                        db.saveMessageIntoDatabase({
-                            type: type,
-                            content: msg,
-                            groupId: uid,
-                            userId: BOT_QQNUM,
-                            messageId: body.data.message_id
-                        });
-                        break;
-                    case "private":
-                        db.saveMessageIntoDatabase({
-                            type: type,
-                            content: msg,
-                            userId: uid,
-                            sender: BOT_QQNUM,
-                            messageId: body.data.message_id
-                        });
-                        break;
-                    default:
-                        log.write("遇到了不支持的消息类型.", "MAIN THREAD", "ERROR");
-                        break;
-                }
-                callback(body.data.message_id);
-            } else {
-                log.write(`送往<${uid}>: <${msg}>.`, "MESSAGE API] [消息已放入异步队列", "INFO");
-                switch (type) {
-                    case "group":
-                        db.saveMessageIntoDatabase({
-                            type: type,
-                            content: msg,
-                            groupId: uid,
-                            userId: BOT_QQNUM,
-                            messageId: "async"
-                        });
-                        break;
-                    case "discuss":
-                        db.saveMessageIntoDatabase({
-                            type: type,
-                            content: msg,
-                            groupId: uid,
-                            userId: BOT_QQNUM,
-                            messageId: "async"
-                        });
-                        break;
-                    case "private":
-                        db.saveMessageIntoDatabase({
-                            type: type,
-                            content: msg,
-                            userId: uid,
-                            sender: BOT_QQNUM,
-                            messageId: "async"
-                        });
-                        break;
-                    default:
-                        log.write("遇到了不支持的消息类型.", "MAIN THREAD", "ERROR");
-                        break;
-                }
+        if (body.retcode == 0) {
+            log.write(`送往<${uid}>: <${msg}>.`, "MESSAGE API] [消息已送达", "INFO");
+            switch (type) {
+                case "group":
+                    db.saveMessageIntoDatabase({
+                        type: type,
+                        content: msg,
+                        groupId: uid,
+                        userId: BOT_QQNUM,
+                        messageId: body.data.message_id
+                    });
+                    break;
+                case "discuss":
+                    db.saveMessageIntoDatabase({
+                        type: type,
+                        content: msg,
+                        groupId: uid,
+                        userId: BOT_QQNUM,
+                        messageId: body.data.message_id
+                    });
+                    break;
+                case "private":
+                    db.saveMessageIntoDatabase({
+                        type: type,
+                        content: msg,
+                        userId: uid,
+                        sender: BOT_QQNUM,
+                        messageId: body.data.message_id
+                    });
+                    break;
+                default:
+                    log.write("遇到了不支持的消息类型.", "MAIN THREAD", "ERROR");
+                    break;
             }
-
+            if (typeof (callback) === "function") {
+                callback(body.data.message_id);
+            }
         } else {
-            console.log(body);
-            log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [消息发送失败", "WARNING");
-            return false;
+            if (body.retcode == -34) {
+                log.write(`Ret:<${body.retcode}>(帐号在群内被禁言). 已发起退群.`, "MESSAGE API] [消息发送失败", "WARNING");
+                getGroupMemberList(uid, (data) => {
+                    data.forEach((v) => {
+                        if (v.role != "member") {
+                            send("private", v.user_id, `老人机即将退出群聊<${uid}>，原因是:\n老人机所属帐号在群内被禁言.\n此消息只起到提示作用，退群动作已经执行且无法撤销.\n若有需要，您可重新邀请老人机加入群聊.`);
+                        }
+                    });
+                    setTimeout(function () {
+                        leave(uid);
+                    }, 5000);
+                });
+            } else {
+                console.log(body);
+                log.write(`Ret:<${body.retcode}>`, "MESSAGE API] [消息发送失败", "WARNING");
+                return false;
+            }
         }
     });
 }
+
+// function send(type, uid, msg, escape = false, callback = null) {
+//     if (typeof (idMap[type]) === "undefined") {
+//         log.write("消息发送失败:传入的参数类型不受支持.", "MESSAGE API", "WARNING");
+//         return false;
+//     }
+//     var async = typeof (callback) === "function" ? false : true;
+//     if (async === false) {
+//         var url = `http://${API_HOST}:${API_HTTP_PORT}/send_msg?access_token=${ACCESS_TOKEN}`;
+//     } else {
+//         var url = `http://${API_HOST}:${API_HTTP_PORT}/send_msg_async?access_token=${ACCESS_TOKEN}`;
+//     }
+//     var postdata = {
+//         message_type: type,
+//         message: msg,
+//         auto_escape: escape === true ? true : false
+//     };
+//     postdata[idMap[type]] = uid;
+//     async_request.post({
+//         'url': url,
+//         json: postdata
+//     }, function (_e, _r, body) {
+//         if (body.retcode == async === false ? 0 : 1) {
+//             if (async === false) {
+//                 log.write(`送往<${uid}>: <${msg}>.`, "MESSAGE API] [消息已送达", "INFO");
+//                 switch (type) {
+//                     case "group":
+//                         db.saveMessageIntoDatabase({
+//                             type: type,
+//                             content: msg,
+//                             groupId: uid,
+//                             userId: BOT_QQNUM,
+//                             messageId: body.data.message_id
+//                         });
+//                         break;
+//                     case "discuss":
+//                         db.saveMessageIntoDatabase({
+//                             type: type,
+//                             content: msg,
+//                             groupId: uid,
+//                             userId: BOT_QQNUM,
+//                             messageId: body.data.message_id
+//                         });
+//                         break;
+//                     case "private":
+//                         db.saveMessageIntoDatabase({
+//                             type: type,
+//                             content: msg,
+//                             userId: uid,
+//                             sender: BOT_QQNUM,
+//                             messageId: body.data.message_id
+//                         });
+//                         break;
+//                     default:
+//                         log.write("遇到了不支持的消息类型.", "MAIN THREAD", "ERROR");
+//                         break;
+//                 }
+//                 callback(body.data.message_id);
+//             } else {
+//                 log.write(`送往<${uid}>: <${msg}>.`, "MESSAGE API] [消息已放入异步队列", "INFO");
+//                 switch (type) {
+//                     case "group":
+//                         db.saveMessageIntoDatabase({
+//                             type: type,
+//                             content: msg,
+//                             groupId: uid,
+//                             userId: BOT_QQNUM,
+//                             messageId: "async"
+//                         });
+//                         break;
+//                     case "discuss":
+//                         db.saveMessageIntoDatabase({
+//                             type: type,
+//                             content: msg,
+//                             groupId: uid,
+//                             userId: BOT_QQNUM,
+//                             messageId: "async"
+//                         });
+//                         break;
+//                     case "private":
+//                         db.saveMessageIntoDatabase({
+//                             type: type,
+//                             content: msg,
+//                             userId: uid,
+//                             sender: BOT_QQNUM,
+//                             messageId: "async"
+//                         });
+//                         break;
+//                     default:
+//                         log.write("遇到了不支持的消息类型.", "MAIN THREAD", "ERROR");
+//                         break;
+//                 }
+//             }
+
+//         } else {
+//             console.log(body);
+//             log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [消息发送失败", "WARNING");
+//             return false;
+//         }
+//     });
+// }
 
 function prepare(packet, message, at = false) {
     switch (packet.post_type) {
@@ -197,7 +272,7 @@ function prepare(packet, message, at = false) {
     }
 }
 
-function revoke(id, packet = "fuck") {
+function revoke(id, packet = null) {
     var data = {};
     data.message_id = id;
     var url = `http://${API_HOST}:${API_HTTP_PORT}/delete_msg?access_token=${ACCESS_TOKEN}`;
@@ -217,7 +292,7 @@ function revoke(id, packet = "fuck") {
         return true;
     } else {
         console.log(res.getBody("utf8"));
-        if (packet != "fuck") {
+        if (packet !== null) {
             prepare(packet, `未能撤回消息<${id}>，可能的原因：\n权限不足.`).send();
         }
         log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [消息撤回失败", "WARNING");
@@ -303,25 +378,30 @@ function userinfo(uid) {
     }
 }
 
-function getGroupList() {
+function getGroupList(callback) {
     var url = `http://${API_HOST}:${API_HTTP_PORT}/get_group_list?access_token=${ACCESS_TOKEN}`;
-    var res = request("GET", url);
-    try {
-        var response = JSON.parse(res.getBody("utf8"));
-    } catch (e) {
-        console.log(res.getBody("utf8"));
-        log.write("无法解析服务器返回的数据.", "MESSAGE API] [获取群列表失败", "WARNING");
-        log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [获取群列表失败", "WARNING");
-        return false;
-    }
-    if (response.retcode == 0) {
-        log.write(`已完成所请求的服务.`, "MESSAGE API] [成功获取群列表", "INFO");
-        return response.data;
-    } else {
-        console.log(res.getBody("utf8"));
-        log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [获取群列表失败", "WARNING");
-        return false;
-    }
+    async_request.post({
+        'url': url
+    }, function (_e, _r, body) {
+        try {
+            body = JSON.parse(body);
+        } catch (e) {
+            console.log(body);
+            log.write("无法解析服务器返回的数据.", "MESSAGE API] [获取群列表失败", "WARNING");
+            log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [获取群列表失败", "WARNING");
+            return false;
+        }
+        if (body.retcode == 0) {
+            log.write(`成功获取群列表`, "MESSAGE API", "INFO");
+            if (typeof (callback) === "function") {
+                callback(body.data);
+            }
+        } else {
+            console.log(body);
+            log.write(`Ret:<${body.retcode}>`, "MESSAGE API] [获取群列表失败", "WARNING");
+            return false;
+        }
+    });
 }
 
 function changeNickname(gid, uid, name, async = true) {
@@ -388,6 +468,73 @@ function mute(gid, uid, time) {
     }
 }
 
+function getGroupMemberList(gid, callback) {
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/get_group_member_list?access_token=${ACCESS_TOKEN}`;
+    var postdata = {
+        group_id: gid
+    };
+    async_request.post({
+        'url': url,
+        json: postdata
+    }, function (_e, _r, body) {
+            if (body.retcode == 0) {
+            log.write(`成功获取群成员列表`, "MESSAGE API", "INFO");
+            if (typeof (callback) === "function") {
+                callback(body.data);
+            }
+        } else {
+            console.log(body);
+            log.write(`Ret:<${body.retcode}>`, "MESSAGE API] [获取群成员列表失败", "WARNING");
+            return false;
+        }
+    });
+}
+
+function getFriendList(callback) {
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/get_friend_list?access_token=${ACCESS_TOKEN}`;
+    async_request.post({
+        'url': url
+    }, function (_e, _r, body) {
+            try{
+                body = JSON.parse(body);
+            } catch (e) {
+                console.log(body);
+                log.write("无法解析服务器返回的数据.", "MESSAGE API] [获取好友列表失败", "WARNING");
+                log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [获取好友列表失败", "WARNING");
+                return false;
+            }
+            if (body.retcode == 0) {
+                log.write(`成功获取好友列表`, "MESSAGE API", "INFO");
+                if (typeof (callback) === "function") {
+                    callback(body.data);
+                }
+            } else {
+                console.log(body);
+                log.write(`Ret:<${body.retcode}>`, "MESSAGE API] [获取好友列表失败", "WARNING");
+                return false;
+            }
+    });
+}
+
+function leave(gid) {
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/set_group_leave?access_token=${ACCESS_TOKEN}`;
+    var postdata = {
+        group_id: gid
+    };
+    async_request.post({
+        'url': url,
+        json: postdata
+    }, function (_e, _r, body) {
+        if (body.retcode == 0) {
+            log.write(`目标群组: ${gid}.`, "MESSAGE API] [已退出群组", "INFO");
+        } else {
+            console.log(body);
+            log.write(`Ret:<${body.retcode}>`, "MESSAGE API] [退出群组失败", "WARNING");
+            return false;
+        }
+    });
+}
+
 function checkPermission(packet) {
     if (!isGroupAdministrator(packet)) {
         var msg = "权限不足.";
@@ -419,7 +566,9 @@ function checkSelfPermission(gid, callback) {
     }, function (_e, _r, body) {
         if (body.retcode == 0) {
             log.write(`成功获取机器人权限`, "MESSAGE API", "INFO");
-            callback(body.data.role == "member" ? false : true)
+            if (typeof (callback) === "function") {
+                callback(body.data.role == "member" ? false : true);
+            }
         } else {
             console.log(body);
             log.write(`Ret:<${body.retcode}>`, "MESSAGE API] [获取机器人权限失败", "WARNING");
@@ -451,6 +600,7 @@ module.exports = {
     userinfo,
     getGroupList,
     mute,
+    leave,
     checkPermission,
     checkSuperPermission,
     checkSelfPermission,
@@ -458,4 +608,6 @@ module.exports = {
     getGroupMemberInfo,
     isGlobalAdministrator,
     isGroupAdministrator,
+    getGroupMemberList,
+    getFriendList,
 }

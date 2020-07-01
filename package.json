@@ -4,6 +4,7 @@
   "description": "A QQBot based on CoolQHttpApi",
   "main": "app.js",
   "dependencies": {
+    "baidu-aip-sdk": "^2.4.6",
     "better-sqlite3": "^7.1.0",
     "chinese_convert": "^1.0.8",
     "cq-websocket": "^2.1.1",

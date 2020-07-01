@@ -13,7 +13,7 @@ config.registerSuperCommand({
     argument: "[plugin]",
     requirePermission: true,
     description: "启用指定插件，使用示例：#启用插件 boostmap",
-    skip: true
+    visible: false
 });
 
 config.registerSuperCommand({
@@ -23,7 +23,7 @@ config.registerSuperCommand({
     argument: "[plugin]",
     requirePermission: true,
     description: "禁用指定插件，使用示例：#禁用插件 boostmap",
-    skip: true
+    visible: false
 });
 
 function enable(packet) {

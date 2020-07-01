@@ -4,37 +4,30 @@ const processPath = process.cwd().replace(/\\/g, "/");//程序运行路径
 const fs = require("fs");
 const Database = require("better-sqlite3"); // SQLite3驱动程序
 const log = require(`${processPath}/utils/logger.js`);//日志
-const config = require(`${processPath}/utils/configApi.js`);//设置
 /* 配置 */
-const groupDatabasePath = `${processPath}/group_messages.db`;
-const userDatabasePath = `${processPath}/user_messages.db`;
+const databaseStorePath = `${processPath}/data/database`;
 
-const BOT_QQNUM = config.get("GLOBAL", "BOT_QQNUM");
-
-try {
-    if (fs.existsSync(groupDatabasePath) === false) {
-        log.write("未找到群聊数据库文件，已自动创建.", "DATABASE", "INFO");
-        fs.writeFileSync(groupDatabasePath, "");
+function getDatabase(name) {
+    var filepath = `${databaseStorePath}/${name}.db`;
+    try {
+        if (fs.existsSync(filepath) === false) {
+            log.write(`正在尝试获取的数据库文件<${name}>不存在，已自动创建.`, "DATABASE", "INFO");
+            fs.writeFileSync(filepath, "");
+        }
+    } catch (e) {
+        console.log(e);
+        log.write("无法读取/写入文件系统，请尝试以管理员身份运行本程序.", "DATABASE", "ERROR");
+        process.exit(true);
     }
-    if (fs.existsSync(userDatabasePath) === false) {
-        log.write("未找到私聊数据库文件，已自动创建.", "DATABASE", "INFO");
-        fs.writeFileSync(userDatabasePath, "");
-    }
-} catch (e) {
-    console.log(e);
-    log.write("无法读取/写入文件系统，请尝试以管理员身份运行本程序.", "DATABASE", "ERROR");
-    process.exit(true);
+    return new Database(filepath, {
+        fileMustExist: true
+    });
 }
 
-// 载入数据库
-const gdb = new Database(groupDatabasePath, {
-    fileMustExist: true
-});
-const udb = new Database(userDatabasePath, {
-    fileMustExist: true
-});
+const gdb = getDatabase("group_messages");
+const udb = getDatabase("user_messages");
 
-const saveMessageIntoDatabase = (parameter) => {
+function saveMessageIntoDatabase(parameter) {
     // 检查是否提供了必要参数
     let requiredParameters = ["type", "content", "messageId", "userId"];
     let returnFlag = false;
@@ -112,42 +105,7 @@ const saveMessageIntoDatabase = (parameter) => {
     }
 }
 
-const searchMessageByGidAndUid = (gid, uid) => {
-    try {
-        var data = gdb.prepare(`SELECT * FROM \`${gid}\` WHERE \`user_id\` = '${uid}' AND \`user_id\` != '${BOT_QQNUM}'`).all();
-    } catch (e) {
-        console.log(e);
-        log.write("无法读取数据库.", "DATABASE", "ERROR");
-        return false;
-    }
-    return data;
-}
-
-const searchMessageByGidAndContent = (gid, content) => {
-    try {
-        var data = gdb.prepare(`SELECT * FROM \`${gid}\` WHERE \`content\` LIKE '%${content}%' AND \`user_id\` != '${BOT_QQNUM}'`).all();
-    } catch (e) {
-        console.log(e);
-        log.write("无法读取数据库.", "DATABASE", "ERROR");
-        return false;
-    }
-    return data;
-}
-
-const searchMessageByGidAndUidAndContent = (gid, uid, content) => {
-    try {
-        var data = gdb.prepare(`SELECT * FROM \`${gid}\` WHERE \`user_id\` = '${uid}' AND \`user_id\` != '${BOT_QQNUM}' AND \`content\` LIKE '%${content}%'`).all();
-    } catch (e) {
-        console.log(e);
-        log.write("无法读取数据库.", "DATABASE", "ERROR");
-        return false;
-    }
-    return data;
-}
-
 module.exports = {
+    getDatabase,
     saveMessageIntoDatabase,
-    searchMessageByGidAndUid,
-    searchMessageByGidAndContent,
-    searchMessageByGidAndUidAndContent,
 }

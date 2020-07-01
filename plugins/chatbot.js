@@ -12,15 +12,16 @@ function init() {
     config.registerPlugin({
         type: "message",
         subType: "groupMessage, discussMessage, privateMessage",
-        script: "z_chatbot.js",
+        script: "chatbot.js",
         handler: "chatbot",
         regex: "/./",
         description: "让机器人来陪你聊聊天~",
+        priority: -9999,
         notification: false
     });
     config.registerSuperCommand({
         command: "设置密钥",
-        script: "z_chatbot.js",
+        script: "zchatbot.js",
         handler: "setapikey",
         argument: "[密钥]",
         requirePermission: true,
@@ -28,13 +29,13 @@ function init() {
     });
     config.registerSuperCommand({
         command: "启用一律回复",
-        script: "z_chatbot.js",
+        script: "chatbot.js",
         handler: "enableAlwaysReply",
         description: "启用一律回复功能，启用后，机器人将会回复你说的每一句话.\n使用示例：#启用一律回复"
     });
     config.registerSuperCommand({
         command: "禁用一律回复",
-        script: "z_chatbot.js",
+        script: "chatbot.js",
         handler: "disalbeAlwaysReply",
         description: "禁用一律回复功能，禁用后，和机器人聊天将需要使用唤醒词.\n使用示例：#禁用一律回复"
     });
@@ -85,9 +86,11 @@ function chatbot(packet) {
         }
         var msg = `${response.data.info.text.replace(/小思/g, "老人机")}`;
         if (packet.message_type === "group") {
-            message.prepare(packet, `${msg}\n\n提示：这是未匹配到任何功能时的默认聊天回复，如若要查看机器人支持的功能，请发送"帮助".`, false).send();
+            // message.prepare(packet, `${msg}\n\n提示：这是未匹配到任何功能时的默认聊天回复，如若要查看机器人支持的功能，请发送"帮助".`, false).send();
+            message.prepare(packet, `${msg}`, false).send();
         } else {
-            message.prepare(packet, `${msg}\n\n提示：这是未匹配到任何功能时的默认聊天回复，如若要查看机器人支持的功能，请发送"帮助".`).send();
+            // message.prepare(packet, `${msg}\n\n提示：这是未匹配到任何功能时的默认聊天回复，如若要查看机器人支持的功能，请发送"帮助".`).send();
+            message.prepare(packet, `${msg}`).send();
         }
     });
     // sync method

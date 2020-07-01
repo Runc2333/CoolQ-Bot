@@ -12,18 +12,12 @@ const tool = require(`${processPath}/utils/toolbox.js`);
 
 function init() {
     config.registerPlugin({
-        type: "notice",
-        subType: "groupIncrease",
-        script: "captcha.js",
-        handler: "captcha",
-        description: "给新成员发送入群验证"
-    });
-    config.registerPlugin({
         type: "message",
         subType: "groupMessage",
         script: "captcha.js",
         handler: "auth",
         regex: "/./",
+        priority: 9999,
         description: "给新成员发送入群验证",
         notification: false
     });
@@ -33,14 +27,24 @@ function init() {
         script: "captcha.js",
         handler: "refresh",
         regex: "/换一张/",
+        priority: 9999,
         description: "给新成员发送入群验证",
         notification: false
+    });
+    config.registerPlugin({
+        type: "notice",
+        subType: "groupIncrease",
+        script: "captcha.js",
+        handler: "captcha",
+        priority: 9999,
+        description: "给新成员发送入群验证"
     });
     config.registerPlugin({
         type: "notice",
         subType: "groupDecrease",
         script: "captcha.js",
         handler: "userExit",
+        priority: 9999,
         description: "给新成员发送入群欢迎"
     });
     if (config.get("CAPTCHA") === false) {
@@ -53,11 +57,13 @@ function init() {
         for (key in PENDING_CAPTCHA) {
             var user_id = PENDING_CAPTCHA[key].userId;
             message.send("group", PENDING_CAPTCHA[key].group, `${cqcode.at(`${PENDING_CAPTCHA[key].userId}`)}\n因后端程序重启，验证时间已被重置.\n请在600秒内发送下图中的验证码，不区分大小写.\n若超时未发送, 您将会被移出群聊.${cqcode.image(`${PENDING_CAPTCHA[key].image}`)}\n发送"换一张"可更换一张验证码.`);
+            message.send("private", PENDING_CAPTCHA[key].userId, `因后端程序重启，您在群组<${PENDING_CAPTCHA[key].group}>内的人机验证时间已被重置为600秒，请尽快前往群内完成人机验证.\n若超时未完成，您将会被移出群组.`);
             setTimeout(function () {
                 var PENDING_CAPTCHA = config.get("CAPTCHA", "PENDING_CAPTCHA");
                 for (key in PENDING_CAPTCHA) {
                     if (user_id == PENDING_CAPTCHA[key].userId) {
                         message.send("group", PENDING_CAPTCHA[key].group, `${cqcode.at(`${PENDING_CAPTCHA[key].userId}`)}\n您将在300秒后被移出群组，若要避免，请发送下图中的验证码，不区分大小写.${cqcode.image(PENDING_CAPTCHA[key].image)}\n发送"换一张"可更换一张验证码.`);
+                        message.send("private", PENDING_CAPTCHA[key].userId, `您将在300秒后被移出群组<${PENDING_CAPTCHA[key].group}>，请尽快前往群内完成人机验证.\n若超时未完成，您将会被移出群组.`);
                         return true;
                     }
                 }
@@ -67,6 +73,7 @@ function init() {
                 for (key in PENDING_CAPTCHA) {
                     if (user_id == PENDING_CAPTCHA[key].userId) {
                         message.send("group", PENDING_CAPTCHA[key].group, `${cqcode.at(`${PENDING_CAPTCHA[key].userId}`)}\n您已因超时未验证被移出群聊，若有需要，您可重新申请加入.`);
+                        message.send("private", PENDING_CAPTCHA[key].userId, `您已因超时未验证被移出群组<${PENDING_CAPTCHA[key].group}>，若有需要，您可重新申请加入.`);
                         var tmp = key;
                         setTimeout(function () {
                             var PENDING_CAPTCHA = config.get("CAPTCHA", "PENDING_CAPTCHA");
@@ -87,7 +94,7 @@ function captcha(packet) {
         if (permission) {
             var captchaImage = svgCaptcha.create({
                 size: 6,
-                ignoreChars: "iIlLoOq10WMVwmvDUuVvaAsSdDfFQ",
+                ignoreChars: "iIlLoO0vVuUwW",
                 noise: 2,
                 background: "#FFFFFF",
                 color: false
@@ -104,11 +111,13 @@ function captcha(packet) {
                 // console.log(PENDING_CAPTCHA);
                 config.write("CAPTCHA", PENDING_CAPTCHA, "PENDING_CAPTCHA");
                 message.prepare(packet, `欢迎加入群聊！\n请在600秒内发送下图中的验证码，不区分大小写.\n若超时未发送, 您将会被移出群聊.${cqcode.image(imageBase64)}\n发送"换一张"可更换一张验证码.`, true).send();
+                message.send("private", packet.user_id, `您已成功加入群组<${packet.group_id}>，请尽快前往群内完成人机验证.\n若超时未完成，您将会被移出群组.`);
                 setTimeout(function () {
                     var PENDING_CAPTCHA = config.get("CAPTCHA", "PENDING_CAPTCHA");
                     for (key in PENDING_CAPTCHA) {
                         if (PENDING_CAPTCHA[key].userId == packet.user_id.toString() && PENDING_CAPTCHA[key].group == packet.group_id.toString()) {
                             message.prepare(packet, `您将在300秒后被移出群组，若要避免，请发送下图中的验证码，不区分大小写.${cqcode.image(imageBase64)}\n发送"换一张"可更换一张验证码.`, true).send();
+                            message.send("private", packet.user_id, `您将在300秒后被移出群组<${packet.group_id}>，请尽快前往群内完成人机验证.\n若超时未完成，您将会被移出群组.`);
                             // console.log("Timer1 Done.");
                             return true;
                         }
@@ -118,7 +127,8 @@ function captcha(packet) {
                     var PENDING_CAPTCHA = config.get("CAPTCHA", "PENDING_CAPTCHA");
                     for (key in PENDING_CAPTCHA) {
                         if (PENDING_CAPTCHA[key].userId == packet.user_id.toString() && PENDING_CAPTCHA[key].group == packet.group_id.toString()) {
-                            message.prepare(packet, `您已因超时未验证被移出群聊，若有需要，您可重新申请加入.`, true).send();
+                            message.prepare(packet, `用户<${packet.user_id}>因超时未验证而永远的离开了我们.`, true).send();
+                            message.send("private", packet.user_id, `您已因超时未验证被移出群组<${packet.group_id}>，若有需要，您可重新申请加入.`);
                             PENDING_CAPTCHA.splice(key, 1);
                             config.write("CAPTCHA", PENDING_CAPTCHA, "PENDING_CAPTCHA");
                             setTimeout(function () {
@@ -140,30 +150,43 @@ function captcha(packet) {
 }
 
 function auth(packet) {
-        // console.log(cqcode.decode(packet.message).pureText);
-        var PENDING_CAPTCHA = config.get("CAPTCHA", "PENDING_CAPTCHA");
-        for (key in PENDING_CAPTCHA) {
+    // console.log(cqcode.decode(packet.message).pureText);
+    var PENDING_CAPTCHA = config.get("CAPTCHA", "PENDING_CAPTCHA");
+    var PENDING_CAPTCHA_USERS = [];
+    for (key in PENDING_CAPTCHA) {
+        PENDING_CAPTCHA_USERS.push(PENDING_CAPTCHA[key].user_id);
+    }
+    for (key in PENDING_CAPTCHA) {
+        var similarity = tool.similarity(cqcode.decode(packet.message).pureText.toLowerCase().replace(/[^a-zA-Z]/g, ""), PENDING_CAPTCHA[key].text);
+        if (similarity > 0.8 || eval(`/${PENDING_CAPTCHA[key].text}/`).test(cqcode.decode(packet.message).pureText.toLowerCase())) {
             if (PENDING_CAPTCHA[key].userId == packet.user_id.toString() && PENDING_CAPTCHA[key].group == packet.group_id.toString() && /换一张/.test(cqcode.decode(packet.message).pureText) === false) {
-                if (cqcode.decode(packet.message).pureText.toLowerCase() == PENDING_CAPTCHA[key].text) {
-                    PENDING_CAPTCHA.splice(key, 1);
-                    // console.log(PENDING_CAPTCHA);
-                    config.write("CAPTCHA", PENDING_CAPTCHA, "PENDING_CAPTCHA");
-                    message.prepare(packet, "恭喜您通过了验证！", true).send();
-                } else {
-                    // console.log(packet);
-                    message.revoke(packet.message_id, packet);
-                    if (cqcode.decode(packet.message).pureText.length == 6) {
-                        message.prepare(packet, `输入的验证码有误, 请再试一次.\n相似度:${(tool.similarity(cqcode.decode(packet.message).pureText.toLowerCase(), PENDING_CAPTCHA[key].text) * 100).toFixed(2)}%\n请发送下图中的验证码，不区分大小写.${cqcode.image(`${PENDING_CAPTCHA[key].image}`)}\n发送"换一张"可更换一张验证码.`, true).send();
-                    } else {
-                        message.prepare(packet, `请先通过验证后再进行发言，验证码长度为6位.\n请发送下图中的验证码，不区分大小写.${cqcode.image(`${PENDING_CAPTCHA[key].image}`)}\n发送"换一张"可更换一张验证码.`, true).send();
-                    }
-                }
-            } else if (PENDING_CAPTCHA[key].userId != packet.user_id.toString() && PENDING_CAPTCHA[key].group == packet.group_id.toString() && cqcode.decode(packet.message).pureText.toLowerCase() == PENDING_CAPTCHA[key].text) {
+                PENDING_CAPTCHA.splice(key, 1);
+                // console.log(PENDING_CAPTCHA);
+                config.write("CAPTCHA", PENDING_CAPTCHA, "PENDING_CAPTCHA");
+                message.prepare(packet, "恭喜您通过了验证！", true).send();
+                return true;
+            } else {
                 message.revoke(packet.message_id, packet);
-                message.mute(packet.group_id, packet.sender.user_id, 60);
-                message.prepare(packet, `请不要试图帮助他人完成验证码。`, true).send();
+                if (PENDING_CAPTCHA_USERS.indexOf(packet.user_id.toString()) === -1) {
+                    message.mute(packet.group_id, packet.sender.user_id, 60);
+                    message.prepare(packet, `请不要试图帮助他人完成验证码。`, true).send();
+                    return true;
+                } else {
+                    message.prepare(packet, `您发送的验证码正确，但该验证码不是针对您设置的。\n请找到@您的那条验证消息，并发送对应的验证码。`, true).send();
+                    return true;
+                }
+            }
+        } else if (PENDING_CAPTCHA[key].userId == packet.user_id.toString() && PENDING_CAPTCHA[key].group == packet.group_id.toString() && /换一张/.test(cqcode.decode(packet.message).pureText) === false) {
+            message.revoke(packet.message_id, packet);
+            if (similarity > 0.5) {
+                message.prepare(packet, `输入的验证码有误, 请再试一次.\n验证码长度为6位，且程序最多允许1位验证码的错误.\n请发送下图中的验证码，不区分大小写.${cqcode.image(`${PENDING_CAPTCHA[key].image}`)}\n发送"换一张"可更换一张验证码.`, true).send();
+                return true;
+            } else {
+                message.prepare(packet, `请先完成验证后再进行发言.\n请发送下图中的验证码，不区分大小写.${cqcode.image(`${PENDING_CAPTCHA[key].image}`)}\n发送"换一张"可更换一张验证码.`, true).send();
+                return true;
             }
         }
+    }
 }
 
 function userExit(packet) {
@@ -188,7 +211,7 @@ function refresh(packet) {
     if (keyToChange !== -1) {
         var captchaImage = svgCaptcha.create({
             size: 6,
-            ignoreChars: "iIlLoOq10WMVwmvDUuVvasdfASF7",
+            ignoreChars: "iIlLoO0vVuUwW",
             noise: 2,
             background: "#FFFFFF",
             color: false
