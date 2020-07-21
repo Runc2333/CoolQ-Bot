@@ -10,7 +10,7 @@
     "cq-websocket": "^2.1.1",
     "crypto": "^1.0.1",
     "fs": "^0.0.1-security",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "mime-types": "^2.1.26",
     "moment-timezone": "^0.5.31",
     "mysql": "^2.18.1",
