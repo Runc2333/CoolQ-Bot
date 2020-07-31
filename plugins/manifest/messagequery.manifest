@@ -1,0 +1,47 @@
+{
+	"pluginName": "messagequery",
+	"pluginAlias": "消息存贮器",
+	"script": "messagequery.js",
+	"description": "保存群内的聊天记录，需要时可通过特定条件查询聊天记录，从此黑屁证据再也不怕丢",
+	"author": "Runc2333",
+	"defaultState": "enable",
+	"switchable": true,
+	"globalConfigurations": false,
+	"groupSensitive": false,
+	"webConsole": false,
+	"superCommand": [{
+			"command": "查某人记录",
+			"handler": "searchByUinAndKeyword",
+			"arguments": [{
+					"name": "目标用户",
+					"required": true
+				},
+				{
+					"name": "关键词",
+					"required": false
+				},
+				{
+					"name": "页数",
+					"required": false
+				}
+			],
+			"permission": 0,
+			"description": "通过QQ号和关键词(可选)来查找ta说过的话.\n使用示例：#查某人记录_1145141919_今晚排位_1"
+		},
+		{
+			"command": "查全群记录",
+			"handler": "searchByKeyword",
+			"arguments": [{
+					"name": "关键词",
+					"required": true
+				},
+				{
+					"name": "页数",
+					"required": false
+				}
+			],
+			"permission": 0,
+			"description": "通过关键词查询群组中所有匹配的消息.\n使用示例：#查全群记录_绝对不鸽_1"
+		}
+	]
+}

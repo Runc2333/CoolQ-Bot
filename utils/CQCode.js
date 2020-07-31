@@ -5,11 +5,11 @@ const config = require(`${processPath}/utils/configApi.js`);//设置
 const log = require(`${processPath}/utils/logger.js`);//日志
 const message = require(`${processPath}/utils/messageApi.js`);//消息接口
 /* 局部常量 */
-const BOT_QQNUM = config.get("GLOBAL", "BOT_QQNUM");
-const API_HOST = config.get("GLOBAL", "API_HOST");//API Host
-const API_HTTP_PORT = config.get("GLOBAL", "API_HTTP_PORT");//HTTP API Port
-const ACCESS_TOKEN = config.get("GLOBAL", "ACCESS_TOKEN");//WebSocket Access Token
-const GLOBAL_ADMINISTRATORS = config.get("GLOBAL", "GLOBAL_ADMINISTRATORS");//全局管理员
+const BOT_QQNUM = config.sys("BOT_QQNUM");
+const API_HOST = config.sys("API_HOST");//API Host
+const API_HTTP_PORT = config.sys("API_HTTP_PORT");//HTTP API Port
+const ACCESS_TOKEN = config.sys("ACCESS_TOKEN");//WebSocket Access Token
+const GLOBAL_ADMINISTRATORS = config.sys("GLOBAL_ADMINISTRATORS");//全局管理员
 
 function at(uin) {
     return `[CQ:at,qq=${uin}]`;

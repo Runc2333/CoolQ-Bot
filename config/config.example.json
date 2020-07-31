@@ -1,10 +1,15 @@
 {
-    "GLOBAL": {
-        "BOT_NAME": "",
-        "BOT_QQNUM": "",
-        "API_HOST": "localhost",
-        "API_HTTP_PORT": 5700,
-        "API_WEBSOCKET_PORT": 6700,
-        "ACCESS_TOKEN": ""
-    }
+    "BOT_NAME": "老人机",
+    "BOT_QQNUM": "1145141919",
+    "API_HOST": "localhost",
+    "API_HTTP_PORT": 5700,
+    "API_WEBSOCKET_PORT": 6700,
+    "ACCESS_TOKEN": "ElderlyBotToken",
+    "MYSQL_HOST": "localhost",
+    "MYSQL_DATABASE": "ElderlyBot",
+    "MYSQL_USERNAME": "ElderlyBot",
+    "MYSQL_PASSWORD": "ElderlyBot",
+    "GLOBAL_ADMINISTRATORS": [
+        "1145141919"
+    ]
 }

@@ -5,6 +5,8 @@ const configFilePath = `${processPath}/config/config.json`;//配置文件路径
 const fs = require("fs");//文件系统读写
 const request = require("sync-request");//同步网络请求
 const { CQWebSocket } = require("cq-websocket");//CoolQ-WebSocket
+const Database = require("better-sqlite3"); // SQLite3驱动程序
+const mysql = require("mysql"); // mysql
 const log = require(`${processPath}/utils/logger.js`);//日志
 const config = require(`${processPath}/utils/configApi.js`);//设置
 const message = require(`${processPath}/utils/messageApi.js`);//消息接口
@@ -18,25 +20,39 @@ const superCommandHandler = require(`${processPath}/systemPlugin/superCommand.js
 
 /* 打印程序信息 */
 log.write("**********************************************", "MAIN THREAD", "INFO");
-log.write("*              CoolQ-Bot v0.1.3              *", "MAIN THREAD", "INFO");
+log.write("*              CoolQ-Bot v0.2.0              *", "MAIN THREAD", "INFO");
 log.write("*             Written In Node.js             *", "MAIN THREAD", "INFO");
-log.write("*              Build:2020.07.01              *", "MAIN THREAD", "INFO");
+log.write("*              Build:2020.07.16              *", "MAIN THREAD", "INFO");
 log.write("*              Author: Runc2333              *", "MAIN THREAD", "INFO");
 log.write("**********************************************", "MAIN THREAD", "INFO");
 
 /* 系统插件 */
 log.write("开始载入系统插件...", "MAIN THREAD", "INFO");
 // require(`${processPath}/systemPlugin/moderation.js`);
-require(`${processPath}/systemPlugin/help.js`);
-require(`${processPath}/systemPlugin/pluginSwitch.js`);
+// require(`${processPath}/systemPlugin/help.js`);
+// require(`${processPath}/systemPlugin/pluginSwitch.js`);
 log.write("系统插件载入完毕.", "MAIN THREAD", "INFO");
 
 /* 局部常量 */
-const BOT_QQNUM = config.get("GLOBAL", "BOT_QQNUM");
-const API_HOST = config.get("GLOBAL", "API_HOST");//WebSocket API Host
-const API_WEBSOCKET_PORT = config.get("GLOBAL", "API_WEBSOCKET_PORT");//WebSocket API Port
-const ACCESS_TOKEN = config.get("GLOBAL", "ACCESS_TOKEN");//WebSocket Access Token
-const GLOBAL_ADMINISTRATORS = config.get("GLOBAL", "GLOBAL_ADMINISTRATORS");//全局管理员
+const BOT_QQNUM = config.sys("BOT_QQNUM");
+const API_HOST = config.sys("API_HOST");//WebSocket API Host
+const API_WEBSOCKET_PORT = config.sys("API_WEBSOCKET_PORT");//WebSocket API Port
+const ACCESS_TOKEN = config.sys("ACCESS_TOKEN");//WebSocket Access Token
+const GLOBAL_ADMINISTRATORS = config.sys("GLOBAL_ADMINISTRATORS");//全局管理员
+
+// 连接远程数据库
+const sqldb = mysql.createConnection({
+    host: config.sys("MYSQL_HOST"),
+    user: config.sys("MYSQL_USERNAME"),
+    password: config.sys("MYSQL_PASSWORD"),
+    database: config.sys("MYSQL_DATABASE"),
+});
+try {
+    sqldb.connect();
+} catch (e) {
+    log.write(`无法连接到远程数据库，正在退出进程...`, "插件开关", "ERROR");
+    process.exit();
+}
 
 /* 初始化后端WS连接 */
 const bot = new CQWebSocket({
@@ -55,7 +71,7 @@ bot.on("ready", function () {
 });
 
 //收到消息
-bot.on("message", function (_CQEvent, packet) {
+bot.on("message", (_CQEvent, packet) => {
     if (packet.sender.user_id == BOT_QQNUM || packet.sender.user_id == "2854196310" || packet.sender.user_id == "2854196320" || packet.sender.user_id == "2854196306" || packet.sender.user_id == "2854196312" || packet.sender.user_id == "2854196314" || packet.sender.user_id == "2854196324" || packet.sender.user_id == "1648312960") {
         return false;
     }
@@ -97,17 +113,22 @@ bot.on("message", function (_CQEvent, packet) {
 });
 
 //收到通知
-bot.on("notice", function (packet) {
+bot.on("notice", (packet) => {
     if (packet.user_id == BOT_QQNUM || packet.user_id == "2854196310" || packet.user_id == "2854196320" || packet.user_id == "2854196306" || packet.user_id == "2854196312" || packet.user_id == "2854196314" || packet.user_id == "2854196324" || packet.user_id == "1648312960") {
         return false;
     }
     noticeHandler.handle(packet);
-})
+});
 
 //收到请求
-bot.on("request", function (packet) {
-    requestHandler.handle(packet);
-})
+bot.on("request", (packet) => {
+    // requestHandler.handle(packet);
+});
+
+//断开连接
+bot.on("socket.error", () => {
+    log.write(`到CQHTTP的WebSocket连接失败.`, "MAIN THREAD", "ERROR");
+});
 
 /* 程序退出事件 */
 process.on("exit", (code) => {
@@ -116,20 +137,226 @@ process.on("exit", (code) => {
 
 /* 捕获异常 */
 process.on("uncaughtException", function (err) {
-    console.log(`Caught exception: ${err}`);
+    log.write(`Caught exception: ${err}`, "MAIN THREAD", "ERROR");
+    log.write(err.stack, "MAIN THREAD", "ERROR")
 });
 
 /* 载入插件 */
 log.write("开始载入用户插件...", "MAIN THREAD", "INFO");
-var plugins = fs.readdirSync(`${processPath}/plugins`);
-for (i = 0; i < plugins.length; i++) {
-    log.write(`已检测到插件: ${plugins[i].split(".")[0]}`, "MAIN THREAD", "INFO");
+var pluginManifests = fs.readdirSync(`${processPath}/plugins/manifest`);
+pluginManifests.forEach((currentManifestName) => {
+    // console.log(`Reading: ${`${processPath}/plugins/manifest/${currentManifestName}`}`);
+    var currentManifest = fs.readFileSync(`${processPath}/plugins/manifest/${currentManifestName}`);
     try {
-        require(`${processPath}/plugins/${plugins[i]}`).init();
+        var currentManifestObject = JSON.parse(currentManifest);
     } catch (e) {
-        console.log(e);
-        log.write(`未能初始化插件<${plugins[i].split(".")[0]}>: 初始化时发生问题.`, "MAIN THREAD", "ERROR");
+        log.write(`[${currentManifestName}]解析失败，该插件将不会运行。`, "MAIN THREAD", "ERROR");
+        return;
     }
-    log.write(`插件<${plugins[i].split(".")[0]}>初始化成功.`, "MAIN THREAD", "INFO");
-}
+    log.write(`已成功解析[${currentManifestName}]，正在注册插件...`, "MAIN THREAD", "INFO");
+    var registerInformation = config.registerPlugin(currentManifestObject);
+    if (registerInformation.status) {
+        require(registerInformation.path).init(registerInformation.token);
+        log.write(`插件[${registerInformation.plugin}]注册成功.`, "MAIN THREAD", "INFO");
+    } else {
+        log.write(`插件[${currentManifestName.split(".")[0]}]注册失败，原因是:${registerInformation.reason}.`, "MAIN THREAD", "ERROR");
+    }
+});
 log.write("用户插件载入完毕.", "MAIN THREAD", "INFO");
+log.write("正在刷新插件启用表...", "MAIN THREAD", "INFO");
+config.generateSwitchTable();
+
+// 上报群列表
+var groupTableProgress = 0;
+var groupTableTotal = 0;
+function generateGroupTable() {
+    log.write("正在上报群列表...", "MAIN THREAD", "INFO");
+    sqldb.query(`SELECT count(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='${config.sys('MYSQL_DATABASE')}' and TABLE_NAME ='GROUP_LIST';`, (e, r, f) => {
+        if (r[0]["count(*)"] === 0) {
+            var sql = 'CREATE TABLE IF NOT EXISTS `GROUP_LIST` (`ID` int(255) NOT NULL AUTO_INCREMENT, `groupId` varchar(190) NOT NULL, `groupName` TEXT NOT NULL,PRIMARY KEY(`ID`)) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;';
+            sqldb.query(sql, () => {
+                var sql = 'CREATE UNIQUE INDEX major ON `GROUP_LIST`(`groupId`);';
+                sqldb.query(sql, () => {
+                    generateGroupTable();
+                });
+            });
+        } else {
+            message.getGroupList((a) => {
+                groupTableTotal = a.length;
+                a.forEach((item) => {
+                    var sql = 'INSERT INTO `GROUP_LIST` (`groupId`, `groupName`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `groupId` = ?, `groupName` = ?;';
+                    sqldb.query(sql, [
+                        item.group_id,
+                        item.group_name,
+                        item.group_id,
+                        item.group_name,
+                    ], (e) => {
+                        groupTableProgress++;
+                        // console.log(e);
+                    });
+                });
+            });
+        }
+    });
+}
+
+// 获取群成员列表
+var groupFetchTotal = 0;
+var groupFetchProgress = 0;
+var userList = [];
+function fetchGroupMemberList() {
+    log.write("正在抓取群成员列表...", "MAIN THREAD", "INFO");
+    sqldb.query(`SELECT count(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='${config.sys('MYSQL_DATABASE')}' and TABLE_NAME ='GROUP_MEMBERS';`, (e, r, f) => {
+        if (r[0]["count(*)"] === 0) {
+            var sql = 'CREATE TABLE IF NOT EXISTS `GROUP_MEMBERS` (`ID` int(255) NOT NULL AUTO_INCREMENT, `groupId` varchar(190) NOT NULL, `userId` varchar(190) NOT NULL, `groupName` TEXT NOT NULL, `nickname` TEXT NOT NULL, `card` TEXT NOT NULL, `joinTime` TEXT NOT NULL, `lastSentTime` TEXT NOT NULL, `role` TEXT NOT NULL,PRIMARY KEY(`ID`)) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;';
+            sqldb.query(sql, () => {
+                var sql = 'CREATE UNIQUE INDEX major ON `GROUP_MEMBERS`(`groupId`, `userId`);';
+                sqldb.query(sql, () => {
+                    var sql = 'CREATE INDEX userid ON `GROUP_MEMBERS`(`userId`);';
+                    sqldb.query(sql, () => {
+                        fetchGroupMemberList();
+                    });
+                });
+            });
+        } else {
+            message.getGroupList((a) => {
+                groupFetchTotal = a.length;
+                a.forEach((item) => {
+                    message.getGroupMemberList(item.group_id, (list) => {
+                        list.forEach((user) => {
+                            user.group_name = item.group_name;
+                            userList.push(user);
+                        });
+                        groupFetchProgress++;
+                    });
+                });
+            });
+        }
+    });
+}
+
+// 上报群成员列表
+var groupMemberTotal = 0;
+var groupMemberProgress = 0;
+function reportGroupMemberList(list) {
+    log.write("正在上报群成员列表...", "MAIN THREAD", "INFO");
+    groupMemberTotal = list.length;
+    list.forEach((user) => {
+        var sql = 'INSERT INTO `GROUP_MEMBERS` (`groupId`, `userId`, `groupName`, `nickname`, `card`, `joinTime`, `lastSentTime`, `role`) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `groupId` = ?, `userId` = ?, `groupName` = ?, `nickname` = ?, `card` = ?, `joinTime` = ?, `lastSentTime` = ?, `role` = ?;';
+        sqldb.query(sql, [
+            user.group_id,
+            user.user_id,
+            user.group_name,
+            user.nickname,
+            user.card,
+            user.join_time,
+            user.last_sent_time,
+            user.role,
+            user.group_id,
+            user.user_id,
+            user.group_name,
+            user.nickname,
+            user.card,
+            user.join_time,
+            user.last_sent_time,
+            user.role,
+        ], (e) => {
+            groupMemberProgress++;
+            // console.log(e);
+            // return;
+        });
+    });
+}
+
+// 上报主程序
+var progressInterval = 0;
+function report() {
+    generateGroupTable();
+    progressInterval = setInterval(function () {
+        if (groupTableProgress === groupTableTotal) {
+            log.write(`群列表上报完毕. [${groupTableProgress} / ${groupTableTotal}]`, "MAIN THREAD", "INFO");
+            clearInterval(progressInterval);
+            fetchGroupMemberList();
+            progressInterval = setInterval(function () {
+                if (groupFetchProgress === groupFetchTotal) {
+                    log.write(`群成员列表抓取完毕. [${groupFetchProgress} / ${groupFetchTotal}]`, "MAIN THREAD", "INFO");
+                    clearInterval(progressInterval);
+                    reportGroupMemberList(userList);
+                    progressInterval = setInterval(function () {
+                        if (groupMemberProgress === groupMemberTotal) {
+                            log.write(`群成员列表上报完毕. [${groupMemberProgress} / ${groupMemberTotal}]`, "MAIN THREAD", "INFO");
+                            clearInterval(progressInterval);
+                            groupTableProgress = 0;
+                            groupTableTotal = 0;
+                            groupFetchProgress = 0;
+                            groupFetchTotal = 0;
+                            groupMemberProgress = 0;
+                            groupMemberTotal = 0;
+                            log.write("上报进程已经执行完毕，数据将会每90分钟刷新一次.", "MAIN THREAD", "INFO");
+                        } else {
+                            log.write(`当前正在上报群成员列表... [${groupMemberProgress} / ${groupMemberTotal}]`, "MAIN THREAD", "INFO");
+                        }
+                    }, 2000);
+                } else {
+                    log.write(`当前正在抓取群成员列表... [${groupFetchProgress} / ${groupFetchTotal}]`, "MAIN THREAD", "INFO");
+                }
+            }, 2000);
+        } else {
+            log.write(`当前正在上报群列表... [${groupTableProgress} / ${groupTableTotal}]`, "MAIN THREAD", "INFO");
+        }
+    }, 2000);
+}
+report();
+log.write("上报进程正在后台执行，上报未完成前，机器人性能可能受到影响.", "MAIN THREAD", "INFO");
+
+// 定时刷新上报数据 90分钟
+setInterval(() => {
+    report();
+}, 90 * 60 * 1000);
+
+// 上报消息处理量
+const gdb = db.getDatabase("group_messages");
+
+function reportMessageCapacity() {
+    log.write("正在上报消息处理量...", "MAIN THREAD", "INFO");
+    sqldb.query(`SELECT count(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='${config.sys('MYSQL_DATABASE')}' and TABLE_NAME ='message_capacity';`, (e, r, f) => {
+        if (r[0]["count(*)"] === 0) {
+            var sql = 'CREATE TABLE IF NOT EXISTS `message_capacity` (`ID` int(255) NOT NULL AUTO_INCREMENT, `groupId` varchar(190) NOT NULL, `capacityToday` TEXT NOT NULL, `capacityYesterday` TEXT NOT NULL, `updated` TEXT NOT NULL,PRIMARY KEY(`ID`)) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;';
+            sqldb.query(sql, () => {
+                var sql = 'CREATE UNIQUE INDEX major ON `message_capacity`(`groupId`);';
+                sqldb.query(sql, () => {
+                    reportMessageCapacity();
+                });
+            });
+        } else {
+            message.getGroupList((a) => {
+                a.forEach((item) => {
+                    var tmpToday = (new Date());
+                    var tmpYesterday = (new Date((Math.round((new Date()).getTime() / 1000) - 86400) * 1000));
+                    var today = Math.round((new Date(Date.UTC(tmpToday.getFullYear(), tmpToday.getMonth(), tmpToday.getDate()))).getTime() / 1000) - 28800;
+                    var yesterday = Math.round((new Date(Date.UTC(tmpYesterday.getFullYear(), tmpYesterday.getMonth(), tmpYesterday.getDate()))).getTime() / 1000) - 28800;
+                    var capacityYesterday = gdb.prepare(`SELECT count(*) FROM \`${item.group_id}\` WHERE \`time\` > ${yesterday} AND \`time\` < ${today}`).all()[0]["count(*)"];
+                    var capacityToday = gdb.prepare(`SELECT count(*) FROM \`${item.group_id}\` WHERE \`time\` > ${today}`).all()[0]["count(*)"];
+                    var sql = 'INSERT INTO `message_capacity` (`groupId`, `capacityToday`, `capacityYesterday`, `updated`) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE `groupId` = ?, `capacityToday` = ?, `capacityYesterday` = ?, `updated` = ?;';
+                    sqldb.query(sql, [
+                        item.group_id,
+                        capacityToday,
+                        capacityYesterday,
+                        Math.round(new Date().getTime() / 1000),
+                        item.group_id,
+                        capacityToday,
+                        capacityYesterday,
+                        Math.round(new Date().getTime() / 1000),
+                    ], (e) => {
+                        // console.log(e);
+                    });
+                });
+            });
+        }
+    });
+}
+reportMessageCapacity();
+// 定时刷新上报数据 2分钟
+setInterval(() => {
+    reportMessageCapacity();
+}, 2 * 60 * 1000);

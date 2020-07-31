@@ -1,0 +1,54 @@
+{
+	"pluginName": "token",
+	"pluginAlias": "令牌生成器",
+	"script": "token.js",
+	"description": " 生成用于连接网页客户端的令牌*",
+	"author": "Runc2333",
+	"defaultState": "enable",
+	"switchable": false,
+	"globalConfigurations": true,
+	"globalConfigStructure": [{
+		"tableName": "token",
+		"columns": [
+			{
+				"key": "elderlyBotNum",
+				"primary": false
+			},
+			{
+				"key": "userId",
+				"primary": false
+			},
+			{
+				"key": "userNickname",
+				"primary": false
+			},
+			{
+				"key": "token",
+				"primary": true
+			},
+			{
+				"key": "expire",
+				"primary": false
+			},
+			{
+				"key": "used",
+				"primary": false
+			}
+		]
+	}],
+	"groupSensitive": false,
+	"webConsole": false,
+	"message": [
+		{
+			"type": [
+				"PRIVATE_MESSAGE"
+			],
+			"mode": "regexp",
+			"regexp": "^#生成令牌",
+			"handler": "generate",
+			"priority": 1000,
+			"skipable": false,
+			"silent": false
+		}
+	]
+}

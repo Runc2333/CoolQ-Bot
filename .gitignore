@@ -11,3 +11,7 @@ test.js
 *.db
 test2.js
 broadcast.js
+commandlineUtils/pinyinGenerator.js
+plugins/manifest/boostmap.manifest
+plugins/script/boostmap.js
+tmp

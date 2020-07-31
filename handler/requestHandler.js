@@ -7,7 +7,7 @@ const config = require(`${processPath}/utils/configApi.js`);//设置
 const message = require(`${processPath}/utils/messageApi.js`);//消息接口
 const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
 
-function handle(packet) {
+function handle(packet, systemToken) {
     switch (packet.request_type) {
         case "friend":
             var data = {};
@@ -25,9 +25,6 @@ function handle(packet) {
             }
             if (response.retcode == 0) {
                 log.write(`目标用户: <${packet.user_id}>`, "RequestHandler] [成功同意好友请求", "INFO");
-                setTimeout(function () {
-                    message.send("private", packet.user_id, "你好，我是老人机.\n在私聊状态下，我仅拥有部分能力，因此功能表现可能和在群内不一致.\n要了解我的全部功能，请发送\"帮助\"\nBug反馈、功能咨询(免费)、功能定制(免费)联系Runc(814537405).");
-                }, 2000);
             } else {
                 console.log(res.getBody("utf8"));
                 log.write(`Ret:<${response.retcode}>`, "RequestHandler] [同意好友请求失败", "WARNING");
@@ -89,8 +86,8 @@ function handle(packet) {
                     if (response.retcode == 0) {
                         log.write(`目标群: <${packet.group_id}>`, "RequestHandler] [成功同意入群邀请", "INFO");
                         setTimeout(function () {
-                            message.send("group", packet.group_id, "大家好，我是老人机.\n我拥有入群验证、入群欢迎、广告过滤、每日抽签、灵魂鸡汤、智障聊天、关键词匹配、QQ炫舞爆点查询等能力\n要了解我的全部功能，请发送\"帮助\"\n要了解我的可配置项，请发送\"#指令帮助\"\nBug反馈、功能咨询、功能定制联系Runc(814537405).");
-                        }, 2000)
+                            message.send("group", packet.group_id.toString(), "大家好，我是老人机.\n我拥有入群验证、入群欢迎、广告过滤、每日抽签、灵魂鸡汤、智障聊天、关键词匹配、QQ炫舞爆点查询等能力\n要了解我的全部功能，请发送\"帮助\"\n要了解我的可配置项，请发送\"#指令帮助\"\nBug反馈、功能咨询、功能定制联系Runc(814537405).");
+                        }, 2000);
                     } else {
                         console.log(res.getBody("utf8"));
                         log.write(`Ret:<${response.retcode}>`, "RequestHandler] [同意入群邀请失败", "WARNING");

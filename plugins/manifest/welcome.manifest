@@ -1,0 +1,65 @@
+{
+	"pluginName": "welcome",
+	"pluginAlias": "入群欢迎",
+	"script": "welcome.js",
+	"description": "向新入群的成员发送预设的欢迎语",
+	"author": "Runc2333",
+	"defaultState": "enable",
+	"switchable": true,
+	"globalConfigurations": false,
+	"groupSensitive": true,
+	"groupConfigStructure": [{
+		"tableName": "message",
+		"columns": [{
+				"key": "message",
+				"primary": false
+			}
+		]
+	}],
+	"webConsole": true,
+	"webConsoleConfigurableItems": [{
+		"name": "入群欢迎",
+		"description": "此处用于设置有新成员加入时发送的欢迎语。",
+		"table": "message",
+		"permission": 1,
+		"maximum": 1,
+		"columns": [{
+			"name": "message",
+			"type": "input",
+			"alias": "欢迎语",
+			"description": "新成员加入时发送的话语"
+		}]
+	}],
+	"notice": [{
+			"type": [
+				"GROUP_INCREASE"
+			],
+			"handler": "welcome",
+			"priority": 0,
+			"skipable": false
+		}
+	],
+	"superCommand": [{
+			"command": "设置欢迎语",
+			"handler": "set",
+			"arguments": [{
+				"name": "欢迎语",
+				"required": true
+			}],
+			"permission": 1,
+			"description": "设置有新成员加入时发送的欢迎语。\n使用示例：#设置欢迎语_欢迎萌新~"
+		},
+		{
+			"command": "删除欢迎语",
+			"handler": "remove",
+			"permission": 1,
+			"description": "删除已设置的欢迎语。\n使用示例：#删除欢迎语"
+		},
+		{
+			"command": "显示欢迎语",
+			"handler": "display",
+			"permission": 0,
+			"description": "显示已设置的欢迎语。\n使用示例：#显示欢迎语"
+		}
+	]
+}

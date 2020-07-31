@@ -1,0 +1,143 @@
+{
+	"pluginName": "keyword",
+	"pluginAlias": "问答系统",
+	"script": "keyword.js",
+	"description": "匹配消息中的关键词，发送预设回复",
+	"author": "Runc2333",
+	"defaultState": "enable",
+	"switchable": true,
+	"globalConfigurations": false,
+	"groupSensitive": true,
+	"groupConfigStructure": [
+		{
+			"tableName": "matchrules",
+			"columns": [
+				{
+					"key": "mode",
+					"primary": false
+				},
+				{
+					"key": "target",
+					"primary": true
+				},
+				{
+					"key": "answer",
+					"primary": false
+				}
+			]
+		}
+	],
+	"webConsole": true,
+	"webConsoleConfigurableItems": [
+		{
+			"name": "匹配规则",
+			"description": "此处用于管理群内所有的匹配规则和回复内容。",
+			"table": "matchrules",
+			"permission": 1,
+			"columns": [
+				{
+					"name": "mode",
+					"type": "select",
+					"option": ["精确匹配", "模糊匹配", "正则表达式"],
+					"alias": "匹配模式",
+					"description": "指定关键词的匹配模式"
+				},
+				{
+					"name": "target",
+					"type": "input",
+					"alias": "关键词/正则表达式",
+					"description": "要匹配的关键词"
+				},
+				{
+					"name": "answer",
+					"type": "input",
+					"alias": "回复消息",
+					"description": "匹配到关键词时发送的内容"
+				}
+			]
+		}
+	],
+	"message": [
+		{
+			"type": [
+				"GROUP_MESSAGE"
+			],
+			"mode": "all",
+			"handler": "keyword",
+			"priority": 0,
+			"skipable": true,
+			"silent": true
+		}
+	],
+	"superCommand": [
+		{
+			"command": "添加精确问答",
+			"handler": "add",
+			"identifier": "accurate",
+			"arguments": [
+				{
+					"name": "问题",
+					"required": true
+				},
+				{
+					"name": "答案",
+					"required": true
+				}
+			],
+			"permission": 1,
+			"description": "添加一条精确匹配的问答。\n使用示例：#添加精确问答_你是谁？_老人机！"
+		},
+		{
+			"command": "添加模糊问答",
+			"handler": "add",
+			"identifier": "fuzzy",
+			"arguments": [
+				{
+					"name": "关键词",
+					"required": true
+				},
+				{
+					"name": "答案",
+					"required": true
+				}
+			],
+			"permission": 1,
+			"description": "添加一条模糊匹配的问答。\n使用示例：#添加模糊问答_可爱_老人机最可爱！"
+		},
+		{
+			"command": "添加正则问答",
+			"handler": "add",
+			"identifier": "regexp",
+			"arguments": [
+				{
+					"name": "正则表达式",
+					"required": true
+				},
+				{
+					"name": "答案",
+					"required": true
+				}
+			],
+			"permission": 1,
+			"description": "添加一条正则匹配的问答。\n使用示例：#添加正则问答_/^(.+?)是猪/_$1才不是猪呢"
+		},
+		{
+			"command": "移除问答",
+			"handler": "remove",
+			"arguments": [
+				{
+					"name": "要移除的问答ID",
+					"required": true
+				}
+			],
+			"permission": 1,
+			"description": "移除一条问答。\n使用示例：#移除问答_你是谁？"
+		},
+		{
+			"command": "显示所有问答",
+			"handler": "display",
+			"permission": 0,
+			"description": "显示已经添加到插件的所有问答。\n使用示例：#显示所有问答"
+		}
+	]
+}

@@ -1,0 +1,23 @@
+{
+	"pluginName": "butter",
+	"pluginAlias": "涩图",
+	"script": "butter.js",
+	"description": "随机发送一张涩图",
+	"author": "Runc2333",
+	"defaultState": "enable",
+	"switchable": true,
+	"globalConfigurations": false,
+	"groupSensitive": false,
+	"webConsole": false,
+	"message": [{
+		"type": [
+			"GROUP_MESSAGE", "PRIVATE_MESSAGE", "DISCUSS_MESSAGE"
+		],
+		"mode": "regexp",
+        "regexp": "^来点色图$",
+		"handler": "butter",
+		"priority": 0,
+		"skipable": true,
+		"silent": false
+	}]
+}

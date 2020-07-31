@@ -1,0 +1,90 @@
+{
+	"pluginName": "captcha",
+	"pluginAlias": "入群验证",
+	"script": "captcha.js",
+	"description": "向新入群的成员发送验证码，从而过滤机器人/广告号",
+	"author": "Runc2333",
+	"defaultState": "enable",
+	"switchable": true,
+	"globalConfigurations": false,
+	"groupSensitive": true,
+	"groupConfigStructure": [{
+		"tableName": "pending-captcha",
+		"columns": [{
+				"key": "target",
+				"primary": true
+			},
+			{
+				"key": "text",
+				"primary": false
+			},
+			{
+				"key": "image",
+				"primary": false
+			}
+		]
+	}],
+	"webConsole": false,
+	"message": [{
+			"type": [
+				"GROUP_MESSAGE"
+			],
+			"mode": "all",
+			"handler": "auth",
+			"priority": 9999,
+			"skipable": false,
+			"silent": true
+		},
+		{
+			"type": [
+				"GROUP_MESSAGE"
+			],
+			"mode": "regexp",
+			"regexp": "换一张",
+			"handler": "refresh",
+			"priority": 9999,
+			"skipable": false,
+			"silent": true
+		}
+	],
+	"notice": [{
+			"type": [
+				"GROUP_INCREASE"
+			],
+			"handler": "captcha",
+			"priority": 9999,
+			"skipable": false
+		},
+		{
+			"type": [
+				"GROUP_DECREASE"
+			],
+			"handler": "userExit",
+			"priority": 9999,
+			"skipable": false
+		}
+	],
+	"superCommand": [{
+			"command": "人工通过",
+			"handler": "manual",
+			"identifier": "pass",
+			"arguments": [{
+				"name": "目标用户",
+				"required": true
+			}],
+			"permission": 1,
+			"description": "人工通过某用户的入群验证。\n使用示例：#人工通过_1145141919"
+		},
+		{
+			"command": "人工拒绝",
+			"handler": "manual",
+			"identifier": "decline",
+			"arguments": [{
+				"name": "目标用户",
+				"required": true
+			}],
+			"permission": 1,
+			"description": "人工拒绝某用户的入群验证。\n使用示例：#人工拒绝_1145141919"
+		}
+	]
+}

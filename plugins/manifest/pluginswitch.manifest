@@ -1,0 +1,38 @@
+{
+	"pluginName": "pluginswitch",
+	"pluginAlias": "插件开关",
+	"script": "pluginswitch.js",
+	"description": "启用/停用插件",
+	"author": "Runc2333",
+	"defaultState": "enable",
+	"switchable": false,
+	"globalConfigurations": false,
+	"groupSensitive": false,
+	"webConsole": false,
+	"superCommand": [
+		{
+			"command": "启用插件",
+			"handler": "enable",
+			"arguments": [
+				{
+					"name": "插件名称",
+					"required": true
+				}
+			],
+			"permission": 1,
+			"description": "启用一个插件。\n使用示例：#启用插件_一言"
+		},
+		{
+			"command": "禁用插件",
+			"handler": "disable",
+			"arguments": [
+				{
+					"name": "插件名称",
+					"required": true
+				}
+			],
+			"permission": 1,
+			"description": "禁用一个插件。\n使用示例：#禁用插件_一言"
+		}
+	]
+}

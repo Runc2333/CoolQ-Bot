@@ -166,6 +166,17 @@ function isNum(val) {
     }
 }
 
+function randomString(len) {
+    len = len || 16;
+    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';    /****默认去掉了容易混淆的字符oOLl,9gq,Vv,Uu,I1****/
+    var maxPos = chars.length;
+    var str = "";
+    for (i = 0; i < len; i++) {
+        str += chars.charAt(Math.floor(Math.random() * maxPos));
+    }
+    return str;
+}
+
 module.exports = {
     deepCompare,
     editDistance,
@@ -174,4 +185,5 @@ module.exports = {
     formatTime,
     unique,
     isNum,
+    randomString,
 }

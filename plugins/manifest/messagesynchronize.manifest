@@ -1,0 +1,97 @@
+{
+    "pluginName": "messagesynchronize",
+    "pluginAlias": "消息同步",
+    "script": "messagesynchronize.js",
+    "description": "同步多个群聊内的消息，变相绕过QQ的群人数限制",
+    "author": "Runc2333",
+    "defaultState": "enable",
+    "switchable": true,
+    "globalConfigurations": true,
+    "globalConfigStructure": [
+        {
+            "tableName": "syncrules",
+            "columns": [
+                {
+                    "key": "from",
+                    "primary": true
+                },
+                {
+                    "key": "to",
+                    "primary": true
+                },
+                {
+                    "key": "answer",
+                    "primary": false
+                },
+                {
+                    "key": "linked",
+                    "primary": false
+                }
+            ]
+        }
+    ],
+    "groupSensitive": false,
+    "webConsole": false,
+    "message": [{
+        "type": [
+            "GROUP_MESSAGE", "DISCUSS_MESSAGE"
+        ],
+        "mode": "all",
+        "handler": "sync",
+        "priority": -10000,
+        "skipable": true,
+        "silent": true
+    }],
+    "superCommand": [
+		{
+			"command": "发起消息同步",
+			"handler": "linkRequest",
+			"arguments": [
+				{
+					"name": "目标群号",
+					"required": true
+				}
+			],
+			"permission": 1,
+			"description": "向指定群聊发起消息同步请求。\n使用示例：#发起消息同步_"
+		},
+		{
+			"command": "接受同步请求",
+			"handler": "linkAnswer",
+			"identifier": "accept",
+			"arguments": [
+				{
+					"name": "目标群号",
+					"required": true
+				}
+			],
+			"permission": 1,
+			"description": "添加一条模糊匹配的问答。\n使用示例：#添加模糊问答_傻逼_点点是傻逼！"
+		},
+		{
+			"command": "拒绝同步请求",
+			"handler": "linkAnswer",
+			"identifier": "decline",
+			"arguments": [
+				{
+					"name": "目标群号",
+					"required": true
+				}
+			],
+			"permission": 1,
+			"description": "添加一条正则匹配的问答。\n使用示例：#添加正则问答_/^(.+?)是猪/_$1才不是猪呢"
+		},
+		{
+			"command": "中止消息同步",
+			"handler": "linkEnd",
+			"arguments": [
+				{
+					"name": "目标群号",
+					"required": true
+				}
+			],
+			"permission": 1,
+			"description": "移除一条问答。\n使用示例：#移除问答_你是谁？"
+		}
+	]
+}

@@ -1,0 +1,32 @@
+{
+	"pluginName": "chatbot",
+	"pluginAlias": "聊天机器人",
+	"script": "chatbot.js",
+	"description": "让机器人陪你说说话儿",
+	"author": "Runc2333",
+	"defaultState": "enable",
+	"switchable": true,
+	"globalConfigurations": false,
+	"groupSensitive": false,
+	"webConsole": false,
+	"message": [{
+		"type": [
+			"GROUP_MESSAGE", "DISCUSS_MESSAGE"
+		],
+		"mode": "mention",
+		"handler": "chatbot",
+		"priority": -9999,
+		"skipable": true,
+		"silent": false
+	},
+    {
+		"type": [
+			"PRIVATE_MESSAGE"
+		],
+		"mode": "all",
+		"handler": "chatbot",
+		"priority": -9999,
+		"skipable": true,
+		"silent": false
+	}]
+}

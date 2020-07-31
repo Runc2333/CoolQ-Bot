@@ -1,0 +1,22 @@
+{
+	"pluginName": "greeting",
+	"pluginAlias": "问好",
+	"script": "greeting.js",
+	"description": "赋予机器人打招呼的能力",
+	"author": "Runc2333",
+	"defaultState": "enable",
+	"switchable": true,
+	"globalConfigurations": false,
+	"groupSensitive": false,
+	"webConsole": false,
+	"message": [{
+		"type": [
+			"GROUP_MESSAGE", "PRIVATE_MESSAGE", "DISCUSS_MESSAGE"
+		],
+		"mode": "cue",
+		"handler": "greeting",
+		"priority": 0,
+		"skipable": true,
+		"silent": false
+	}]
+}

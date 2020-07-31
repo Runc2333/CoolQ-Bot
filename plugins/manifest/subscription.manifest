@@ -1,0 +1,83 @@
+{
+	"pluginName": "subscription",
+	"pluginAlias": "订阅管理",
+	"script": "subscription.js",
+	"description": "老人机订阅管理系统",
+	"author": "Runc2333",
+	"defaultState": "enable",
+	"switchable": false,
+	"globalConfigurations": true,
+	"globalConfigStructure": [{
+		"tableName": "activation-code",
+		"columns": [{
+				"key": "code",
+				"primary": true
+			},
+			{
+				"key": "grade",
+				"primary": false
+			},
+			{
+				"key": "validity",
+				"primary": false
+			},
+			{
+				"key": "firstActivated",
+				"primary": false
+			},
+			{
+				"key": "lastActivated",
+				"primary": false
+			}
+		]
+	}],
+	"groupSensitive": true,
+	"groupConfigStructure": [{
+			"tableName": "records",
+			"columns": [{
+					"key": "code",
+					"primary": true
+				},
+				{
+					"key": "grade",
+					"primary": false
+				},
+				{
+					"key": "validity",
+					"primary": false
+				}
+			]
+		},
+		{
+			"tableName": "quota",
+			"columns": [{
+					"key": "memberQuota",
+					"primary": false
+				},
+				{
+					"key": "memberCurrent",
+					"primary": false
+				},
+				{
+					"key": "messageQuota",
+					"primary": false
+				},
+				{
+					"key": "messageCurrent",
+					"primary": false
+				}
+			]
+		}
+	],
+	"webConsole": false,
+	"superCommand": [{
+		"command": "替换订阅",
+		"handler": "refresh",
+		"arguments": [{
+			"name": "订阅码",
+			"required": true
+		}],
+		"permission": 1,
+		"description": "替换老人机在本群组内所使用的订阅码。\n使用示例：#替换订阅_FREE"
+	}]
+}

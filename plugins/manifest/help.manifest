@@ -1,0 +1,31 @@
+{
+    "pluginName": "help",
+    "pluginAlias": "帮助系统",
+    "script": "help.js",
+    "description": "显示各类帮助信息",
+    "author": "Runc2333",
+    "defaultState": "enable",
+    "switchable": false,
+    "globalConfigurations": false,
+    "groupSensitive": false,
+    "webConsole": false,
+    "message": [{
+            "type": [
+                "GROUP_MESSAGE", "PRIVATE_MESSAGE", "DISCUSS_MESSAGE"
+            ],
+            "mode": "regexp",
+            "regexp": "帮助|教程|说明|菜单|help",
+            "handler": "displayHelpInfo",
+            "priority": 0,
+            "skipable": false,
+            "silent": false
+        }
+    ],
+    "superCommand": [{
+            "command": "插件",
+            "handler": "displayPluginInfo",
+            "permission": 1,
+            "description": "显示当前注册到系统的插件"
+        }
+    ]
+}
