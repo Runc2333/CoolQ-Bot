@@ -279,6 +279,35 @@ function getGroupInfo(gid) {
     }
 }
 
+function getGroupInfoAsync(gid, callback) {
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/get_group_info?access_token=${ACCESS_TOKEN}`;
+    var postdata = {
+        group_id: gid,
+        no_cache: true
+    };
+    async_request.post({
+        'url': url,
+        json: postdata
+    }, function (e, _r, body) {
+        if (e) {
+            console.log(e)
+            getGroupInfoAsync(gid, callback);
+            return false;
+        }
+        if (body.retcode == 0) {
+            // log.write(`成功获取群信息`, "MESSAGE API", "INFO");
+            if (typeof (callback) === "function") {
+                callback(body.data);
+            }
+        } else {
+            console.log(body);
+            log.write(`Ret:<${body.retcode}>`, "MESSAGE API] [获取群信息失败", "WARNING");
+            // getGroupInfoAsync(gid, callback);
+            return false;
+        }
+    });
+}
+
 function userinfo(uid) {
     var data = {};
     data.user_id = uid;
@@ -405,7 +434,7 @@ function getGroupMemberList(gid, callback) {
     }, function (e, _r, body) {
         if (e) {
             console.log(e)
-            callback([]);
+            getGroupMemberList(gid, callback);
             return false;
         }
         if (body.retcode == 0) {
@@ -416,6 +445,7 @@ function getGroupMemberList(gid, callback) {
         } else {
             console.log(body);
             log.write(`Ret:<${body.retcode}>`, "MESSAGE API] [获取群成员列表失败", "WARNING");
+            getGroupMemberList(gid, callback);
             return false;
         }
     });
@@ -547,6 +577,7 @@ module.exports = {
     checkSelfPermission,
     changeNickname,
     getGroupInfo,
+    getGroupInfoAsync,
     getGroupMemberInfo,
     isGlobalAdministrator,
     isGroupAdministrator,

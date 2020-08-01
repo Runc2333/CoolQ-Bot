@@ -72,7 +72,7 @@ bot.on("ready", function () {
 
 //收到消息
 bot.on("message", (_CQEvent, packet) => {
-    if (packet.sender.user_id == BOT_QQNUM || packet.sender.user_id == "2854196310" || packet.sender.user_id == "2854196320" || packet.sender.user_id == "2854196306" || packet.sender.user_id == "2854196312" || packet.sender.user_id == "2854196314" || packet.sender.user_id == "2854196324" || packet.sender.user_id == "1648312960") {
+    if (packet.sender.user_id == BOT_QQNUM || packet.sender.user_id == "2854196310" || packet.sender.user_id == "2854196320" || packet.sender.user_id == "2854196306" || packet.sender.user_id == "2854196312" || packet.sender.user_id == "2854196314" || packet.sender.user_id == "2854196324" || packet.sender.user_id == "1648312960" || packet.user_id == "1022941833" || packet.user_id == "809154538") {
         return false;
     }
     if (/^#/.test(cqcode.decode(packet.message).pureText) === false) {
@@ -114,7 +114,7 @@ bot.on("message", (_CQEvent, packet) => {
 
 //收到通知
 bot.on("notice", (packet) => {
-    if (packet.user_id == BOT_QQNUM || packet.user_id == "2854196310" || packet.user_id == "2854196320" || packet.user_id == "2854196306" || packet.user_id == "2854196312" || packet.user_id == "2854196314" || packet.user_id == "2854196324" || packet.user_id == "1648312960") {
+    if (packet.user_id == BOT_QQNUM || packet.user_id == "2854196310" || packet.user_id == "2854196320" || packet.user_id == "2854196306" || packet.user_id == "2854196312" || packet.user_id == "2854196314" || packet.user_id == "2854196324" || packet.user_id == "1648312960" || packet.user_id == "1022941833" || packet.user_id == "809154538") {
         return false;
     }
     noticeHandler.handle(packet);
@@ -122,7 +122,7 @@ bot.on("notice", (packet) => {
 
 //收到请求
 bot.on("request", (packet) => {
-    // requestHandler.handle(packet);
+    requestHandler.handle(packet);
 });
 
 //断开连接
@@ -292,6 +292,7 @@ function report() {
                             groupFetchTotal = 0;
                             groupMemberProgress = 0;
                             groupMemberTotal = 0;
+                            userList = [];
                             log.write("上报进程已经执行完毕，数据将会每90分钟刷新一次.", "MAIN THREAD", "INFO");
                         } else {
                             log.write(`当前正在上报群成员列表... [${groupMemberProgress} / ${groupMemberTotal}]`, "MAIN THREAD", "INFO");
@@ -306,13 +307,13 @@ function report() {
         }
     }, 2000);
 }
-report();
-log.write("上报进程正在后台执行，上报未完成前，机器人性能可能受到影响.", "MAIN THREAD", "INFO");
+// report();
+// log.write("上报进程正在后台执行，上报未完成前，机器人性能可能受到影响.", "MAIN THREAD", "INFO");
 
-// 定时刷新上报数据 90分钟
-setInterval(() => {
-    report();
-}, 90 * 60 * 1000);
+// // 定时刷新上报数据 90分钟
+// setInterval(() => {
+//     report();
+// }, 90 * 60 * 1000);
 
 // 上报消息处理量
 const gdb = db.getDatabase("group_messages");
@@ -355,8 +356,8 @@ function reportMessageCapacity() {
         }
     });
 }
-reportMessageCapacity();
-// 定时刷新上报数据 2分钟
-setInterval(() => {
-    reportMessageCapacity();
-}, 2 * 60 * 1000);
+// reportMessageCapacity();
+// // 定时刷新上报数据 2分钟
+// setInterval(() => {
+//     reportMessageCapacity();
+// }, 2 * 60 * 1000);
