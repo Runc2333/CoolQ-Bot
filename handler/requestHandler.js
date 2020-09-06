@@ -6,6 +6,7 @@ const log = require(`${processPath}/utils/logger.js`);//日志
 const config = require(`${processPath}/utils/configApi.js`);//设置
 const message = require(`${processPath}/utils/messageApi.js`);//消息接口
 const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
+const noticeHandler = require(`${processPath}/handler/noticeHandler.js`);
 
 function handle(packet) {
     switch (packet.request_type) {
@@ -57,6 +58,14 @@ function handle(packet) {
                         if (response.retcode == 0) {
                             if (data.approve === true) {
                                 log.write(`目标用户: <${packet.user_id}>`, "RequestHandler] [成功同意入群请求", "INFO");
+                                noticeHandler.handle({
+                                    post_type: 'notice',
+                                    notice_type: 'group_increase',
+                                    sub_type: 'approve',
+                                    group_id: packet.group_id,
+                                    operator_id: packet.self_id,
+                                    user_id: packet.user_id,
+                                }); // 触发一下通知事件
                             } else {
                                 var userinfo = message.userinfo(packet.user_id);
                                 message.prepare(packet, `已自动拒绝用户<${userinfo.nickname}(${packet.user_id})>的加群请求.\n提供的验证信息:\n${packet.comment}`, false).send();

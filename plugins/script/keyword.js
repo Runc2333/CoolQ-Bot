@@ -114,11 +114,11 @@ function add(mode, packet, [target, answer] = []) {
 
 function remove(packet, [ID] = []) {
     config.read({
-        mode: "standard",
+        mode: "advanced",
         token: token,
         table: "matchrules",
         condition: {
-            groupId: packet.group_id,
+            groupId: packet.group_id.toString(),
             ID: ID,
         },
         callback: (r) => {
@@ -165,22 +165,23 @@ function display(packet) {
                 r = r.data;
                 cache[packet.group_id.toString()] = r;
                 if (r.length > 0) {
+                    // console.log(r);
                     var msg = "以下是目前注册到问答系统的所有问答:";
                     r.forEach((item) => {
                         switch (item.mode) {
-                            case "accurate":
+                            case "0":
                                 msg += `\n问答ID：${item.ID}\n`
                                 msg += `匹配模式：精确匹配\n`
                                 msg += `问题：${item.target}\n`;
                                 msg += `回答：${item.answer}\n`;
                                 break;
-                            case "fuzzy":
+                            case "1":
                                 msg += `\n问答ID：${item.ID}\n`
                                 msg += `匹配模式：模糊匹配\n`
                                 msg += `问题：${item.target}\n`;
                                 msg += `回答：${item.answer}\n`;
                                 break;
-                            case "regexp":
+                            case "2":
                                 msg += `\n问答ID：${item.ID}\n`
                                 msg += `匹配模式：正则表达式\n`
                                 msg += `问题：${item.target}\n`;
@@ -189,9 +190,10 @@ function display(packet) {
                         }
                     });
                 } else {
-                    console.log(r);
+                    // console.log(r);
                     var msg = "[问答系统] 当前群组未注册任何问答.";
                 }
+                // console.log(msg);
                 message.prepare(packet, msg, true).send();
             } else {
                 log.write(`发生错误: ${r.msg}`, "问答系统", "ERROR");

@@ -177,6 +177,14 @@ function randomString(len) {
     return str;
 }
 
+function formatDuring(mss) {
+    // var days = parseInt(mss / (1000 * 60 * 60 * 24));
+    var hours = parseInt((mss % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    var minutes = parseInt((mss % (1000 * 60 * 60)) / (1000 * 60));
+    var seconds = Math.round((mss % (1000 * 60)) / 1000);
+    return hours + " 小时 " + minutes + " 分钟 " + seconds + " 秒 ";
+}
+
 module.exports = {
     deepCompare,
     editDistance,
@@ -186,4 +194,5 @@ module.exports = {
     unique,
     isNum,
     randomString,
+    formatDuring,
 }

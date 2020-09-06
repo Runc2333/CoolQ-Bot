@@ -26,7 +26,7 @@ function handle(packet) {
         case "group_upload"://群文件
             var noticeType = "GROUP_UPLOAD";
             // 在群内发送通知
-            var userinfo = message.userinfo(packet.user_id);
+            var userinfo = message.getGroupMemberInfo(packet.group_id, packet.user_id);
             message.prepare(packet, `<${userinfo.nickname}(${packet.user_id})>上传了文件[${packet.file.name}].`, false).send();
             break;
         case "group_admin"://管理员
@@ -37,7 +37,7 @@ function handle(packet) {
                         packet.user_id,
                         packet.group_id
                     ]);
-                    var userinfo = message.userinfo(packet.user_id);
+                    var userinfo = message.getGroupMemberInfo(packet.group_id, packet.user_id);
                     message.prepare(packet, `<${userinfo.nickname}(${packet.user_id})>已成功上位.`, false).send();
                     break;
                 case "unset":
@@ -45,7 +45,7 @@ function handle(packet) {
                         packet.user_id,
                         packet.group_id
                     ]);
-                    var userinfo = message.userinfo(packet.user_id);
+                    var userinfo = message.getGroupMemberInfo(packet.group_id, packet.user_id);
                     message.prepare(packet, `<${userinfo.nickname}(${packet.user_id})>已被罢免.`, false).send();
                     break;
                 default:
@@ -99,13 +99,13 @@ function handle(packet) {
             var noticeType = "GROUP_BAN";
             switch (packet.sub_type) {
                 case "ban":
-                    var operatorinfo = message.userinfo(packet.operator_id);
-                    var userinfo = message.userinfo(packet.user_id);
+                    var operatorinfo = message.getGroupMemberInfo(packet.group_id, packet.operator_id);
+                    var userinfo = message.getGroupMemberInfo(packet.group_id, packet.user_id);
                     message.prepare(packet, `<${operatorinfo.nickname}(${packet.operator_id})>已经给<${userinfo.nickname}(${packet.user_id})>戴上了时长为${packet.duration}秒的口球.`, false).send();
                     break;
                 case "lift_ban":
-                    var operatorinfo = message.userinfo(packet.operator_id);
-                    var userinfo = message.userinfo(packet.user_id);
+                    var operatorinfo = message.getGroupMemberInfo(packet.group_id, packet.operator_id);
+                    var userinfo = message.getGroupMemberInfo(packet.group_id, packet.user_id);
                     message.prepare(packet, `<${userinfo.nickname}(${packet.user_id})>的口球已被<${operatorinfo.nickname}(${packet.operator_id})>摘下.`, false).send();
                     break;
                 default:

@@ -19,18 +19,30 @@ try {
 }
 
 // 连接远程数据库
-const db = mysql.createConnection({
+const MySQLConf = {
     host: configFileObject.MYSQL_HOST,
     user: configFileObject.MYSQL_USERNAME,
     password: configFileObject.MYSQL_PASSWORD,
     database: configFileObject.MYSQL_DATABASE
-});
-try {
-    db.connect();
-} catch (e) {
-    log.write(`无法连接到远程数据库，正在退出进程...`, "CONFIG API", "ERROR");
-    process.exit();
 }
+var db = null;
+function connectMySQL() {
+    db = mysql.createConnection(MySQLConf);
+    try {
+        db.connect();
+    } catch (e) {
+        log.write(`无法连接到远程数据库，正在退出进程...`, "CONFIG API", "ERROR");
+        process.exit();
+    }
+    db.on("error", handleMySQLError); // 自动重连
+}
+function handleMySQLError(err) {
+    log.write("MySQL连接丢失, 正在尝试重连...", "CONFIG API", "WARNING");
+    db.destroy();
+    db = null;
+    connectMySQL();
+}
+connectMySQL();
 // 检查插件注册表是否存在
 db.query('CREATE TABLE IF NOT EXISTS `registry` (`ID` int(255) NOT NULL AUTO_INCREMENT,`plugin` varchar(190) NOT NULL,`alias` text NOT NULL,`description` text NOT NULL,`author` text NOT NULL,`defaultState` text NOT NULL,`switchable` text NOT NULL,PRIMARY KEY(`ID`),UNIQUE KEY `plugin` (`plugin`)) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;');
 // 检查WebConsole表是否存在
@@ -263,6 +275,10 @@ function sys(field) {
 
 function getRegistry() {
     return registry;
+}
+
+function getDatabase() {
+    return db;
 }
 
 function refreshRegistry() {
@@ -684,6 +700,7 @@ module.exports = {
     registerPlugin,
     sys,
     getRegistry,
+    getDatabase,
     read,
     write,
     remove,

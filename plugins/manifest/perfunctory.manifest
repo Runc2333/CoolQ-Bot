@@ -1,0 +1,35 @@
+{
+    "pluginName": "perfunctory",
+    "pluginAlias": "敷衍机",
+    "script": "perfunctory.js",
+    "description": "敷衍冠军就是我",
+    "author": "Runc2333",
+    "defaultState": "enable",
+    "switchable": true,
+    "globalConfigurations": false,
+    "groupSensitive": false,
+    "webConsole": false,
+    "message": [{
+            "type": [
+                "GROUP_MESSAGE", "PRIVATE_MESSAGE", "DISCUSS_MESSAGE"
+            ],
+            "mode": "regexp",
+            "regexp": "喔",
+            "handler": "perfunctory",
+            "priority": 0,
+            "skipable": true,
+            "silent": false
+        },
+        {
+            "type": [
+                "GROUP_MESSAGE", "PRIVATE_MESSAGE", "DISCUSS_MESSAGE"
+            ],
+            "mode": "regexp",
+            "regexp": "抱",
+            "handler": "perfunctory",
+            "priority": 0,
+            "skipable": true,
+            "silent": false
+        }
+    ]
+}

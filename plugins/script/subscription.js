@@ -1,3 +1,5 @@
+const { getDatabase } = require("../../utils/configApi");
+
 /* 通用常量 */
 const processPath = process.cwd().replace(/\\/g, "/");//程序运行路径
 /* 模块 */
@@ -9,12 +11,15 @@ const tool = require(`${processPath}/utils/toolbox.js`);
 var token = null;
 function init(t) {
     token = t;
+    resetUsage();
     refreshPackageCache(() => {
         refreshSubscriptionCache(() => {
             refreshGroupMember();
         });
     });
 }
+
+const db = config.getDatabase();
 
 var packageCache = {};
 var subscriptionCache = {};
@@ -26,6 +31,7 @@ const package = {
     "premium": "高级套餐"
 }
 function check(mode, packet) {
+    return false;
     if (!cacheReady) {
         return false;
     }
@@ -99,7 +105,7 @@ function check(mode, packet) {
             // console.log(`[MENTION] GROUP <${packet.group_id}>`);
             // console.log(`当前群内订阅已达到配额，老人机将停止处理本群的消息，直至配额恢复.\n套餐类型：${package[subscriptionCache[packet.group_id.toString()].grade]}\n过期时间：${tool.formatTime(subscriptionCache[packet.group_id.toString()].validity)}\n消息处理量：[${subscriptionCache[packet.group_id.toString()].messageCurrent} / ${subscriptionCache[packet.group_id.toString()].messageQuota}]\n群人数：[${subscriptionCache[packet.group_id.toString()].memberCurrent} / ${subscriptionCache[packet.group_id.toString()].memberQuota}]`);
 
-            message.prepare(packet, `当前群内订阅已达到配额，老人机将停止处理本群的消息，直至配额恢复.\n套餐类型：${package[subscriptionCache[packet.group_id.toString()].grade]}\n过期时间：${tool.formatTime(subscriptionCache[packet.group_id.toString()].validity)}\n消息处理量：[${subscriptionCache[packet.group_id.toString()].messageCurrent} / ${subscriptionCache[packet.group_id.toString()].messageQuota}]\n群人数：[${subscriptionCache[packet.group_id.toString()].memberCurrent} / ${subscriptionCache[packet.group_id.toString()].memberQuota}]`).send();
+            message.prepare(packet, `当前群内订阅已达到配额，直至配额恢复前，老人机都不会处理群内的消息.\n套餐类型：${package[subscriptionCache[packet.group_id.toString()].grade]}\n过期时间：${tool.formatTime(subscriptionCache[packet.group_id.toString()].validity)}\n消息处理量：[${subscriptionCache[packet.group_id.toString()].messageCurrent} / ${subscriptionCache[packet.group_id.toString()].messageQuota}]\n群人数：[${subscriptionCache[packet.group_id.toString()].memberCurrent} / ${subscriptionCache[packet.group_id.toString()].memberQuota}]\n\n下次重置时间：${tool.formatDuring(((new Date()).setHours(0, 0, 0, 0) + 86400000) - (new Date()).getTime())}\n网页控制台:\nhttp://elderlybot.mobilex5.com/`).send();
             return "forceskip";
         } else {
             if (reminded.indexOf(packet.group_id) === -1) {
@@ -108,7 +114,7 @@ function check(mode, packet) {
                 // console.log(`当前群内订阅已达到配额，老人机将停止处理本群的消息，直至配额恢复.\n套餐类型：${package[subscriptionCache[packet.group_id.toString()].grade]}\n过期时间：${tool.formatTime(subscriptionCache[packet.group_id.toString()].validity)}\n消息处理量：[${subscriptionCache[packet.group_id.toString()].messageCurrent} / ${subscriptionCache[packet.group_id.toString()].messageQuota}]\n群人数：[${subscriptionCache[packet.group_id.toString()].memberCurrent} / ${subscriptionCache[packet.group_id.toString()].memberQuota}]`);
 
                 reminded.push(packet.group_id);
-                message.prepare(packet, `当前群内订阅已达到配额，老人机将停止处理本群的消息，直至配额恢复.\n套餐类型：${package[subscriptionCache[packet.group_id.toString()].grade]}\n过期时间：${tool.formatTime(subscriptionCache[packet.group_id.toString()].validity)}\n消息处理量：[${subscriptionCache[packet.group_id.toString()].messageCurrent} / ${subscriptionCache[packet.group_id.toString()].messageQuota}]\n群人数：[${subscriptionCache[packet.group_id.toString()].memberCurrent} / ${subscriptionCache[packet.group_id.toString()].memberQuota}]`).send();
+                message.prepare(packet, `当前群内订阅已达到配额，老人机将停止处理本群的消息，直至配额恢复.\n套餐类型：${package[subscriptionCache[packet.group_id.toString()].grade]}\n过期时间：${tool.formatTime(subscriptionCache[packet.group_id.toString()].validity)}\n消息处理量：[${subscriptionCache[packet.group_id.toString()].messageCurrent} / ${subscriptionCache[packet.group_id.toString()].messageQuota}]\n群人数：[${subscriptionCache[packet.group_id.toString()].memberCurrent} / ${subscriptionCache[packet.group_id.toString()].memberQuota}]\n\n下次重置时间：${tool.formatDuring(((new Date()).setHours(0, 0, 0, 0) + 86400000) - (new Date()).getTime())}\n网页控制台:\nhttp://elderlybot.mobilex5.com/`).send();
             }
             return "forceskip";
         }
@@ -245,7 +251,7 @@ setInterval(() => {
 }, 60 * 60 * 1000);
 
 function status(packet) {
-    message.prepare(packet, `以下是本群当前的订阅状态：\n套餐类型：${package[subscriptionCache[packet.group_id.toString()].grade]}\n过期时间：${tool.formatTime(subscriptionCache[packet.group_id.toString()].validity)}\n消息处理量：[${subscriptionCache[packet.group_id.toString()].messageCurrent} / ${subscriptionCache[packet.group_id.toString()].messageQuota}]\n群人数：[${subscriptionCache[packet.group_id.toString()].memberCurrent} / ${subscriptionCache[packet.group_id.toString()].memberQuota}]`).send();
+    message.prepare(packet, `以下是本群当前的订阅状态：\n套餐类型：${package[subscriptionCache[packet.group_id.toString()].grade]}\n过期时间：${tool.formatTime(subscriptionCache[packet.group_id.toString()].validity)}\n当日消息处理量：[${subscriptionCache[packet.group_id.toString()].messageCurrent} / ${subscriptionCache[packet.group_id.toString()].messageQuota}]\n群人数：[${subscriptionCache[packet.group_id.toString()].memberCurrent} / ${subscriptionCache[packet.group_id.toString()].memberQuota}]\n\n下次重置时间：${tool.formatDuring(((new Date()).setHours(0, 0, 0, 0) + 86400000) - (new Date()).getTime())}`).send();
 }
 
 function refresh(packet, code) {
@@ -311,6 +317,18 @@ function refresh(packet, code) {
     });
 }
 
+function resetUsage() {
+    var resetTime = ((new Date()).setHours(0, 0, 0, 0) + 86400000) - (new Date()).getTime();
+    console.log(`下次重置时间：${tool.formatDuring(((new Date()).setHours(0, 0, 0, 0) + 86400000) - (new Date()).getTime())}`);
+    setTimeout(function () {
+        db.query("UPDATE `subscription-records` SET `messageCurrent` = 0", (_e, _r) => {
+            setTimeout(function () {
+                resetUsage();
+            }, 1000);
+        });
+    }, resetTime);
+}
+
 module.exports = {
     init,
     check,
@@ -319,4 +337,5 @@ module.exports = {
     refreshGroupMember,
     status,
     refresh,
+    resetUsage,
 }

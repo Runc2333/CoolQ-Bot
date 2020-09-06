@@ -81,16 +81,16 @@ function send(type, uid, msg, escape = false, callback = null) {
         } else {
             if (body.retcode == -34) {
                 log.write(`Ret:<${body.retcode}>(帐号在群内被禁言). 已发起退群.`, "MESSAGE API] [消息发送失败", "WARNING");
-                getGroupMemberList(uid, (data) => {
-                    data.forEach((v) => {
-                        if (v.role != "member") {
-                            send("private", v.user_id, `老人机即将退出群聊<${uid}>，原因是:\n老人机所属帐号在群内被禁言.\n此消息只起到提示作用，退群动作已经执行且无法撤销.\n若有需要，您可重新邀请老人机加入群聊.`);
-                        }
-                    });
-                    setTimeout(function () {
-                        leave(uid);
-                    }, 5000);
-                });
+                // getGroupMemberList(uid, (data) => {
+                //     data.forEach((v) => {
+                //         if (v.role != "member") {
+                //             send("private", v.user_id, `老人机即将退出群聊<${uid}>，原因是:\n老人机所属帐号在群内被禁言.\n此消息只起到提示作用，退群动作已经执行且无法撤销.\n若有需要，您可重新邀请老人机加入群聊.`);
+                //         }
+                //     });
+                //     setTimeout(function () {
+                //         leave(uid);
+                //     }, 5000);
+                // });
             } else {
                 console.log(body);
                 log.write(`Ret:<${body.retcode}>`, "MESSAGE API] [消息发送失败", "WARNING");
@@ -173,12 +173,9 @@ function prepare(packet, message, at = false, escape = false) {
 }
 
 function revoke(id, packet = null) {
-    var data = {};
-    data.message_id = id;
-    var url = `http://${API_HOST}:${API_HTTP_PORT}/delete_msg?access_token=${ACCESS_TOKEN}`;
-    var res = request("POST", url, {
-        json: data
-    });
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/delete_msg?access_token=${ACCESS_TOKEN}&message_id=${id}`;
+    console.log(url);
+    var res = request("GET", url);
     try {
         var response = JSON.parse(res.getBody("utf8"));
     } catch (e) {
@@ -193,7 +190,7 @@ function revoke(id, packet = null) {
     } else {
         console.log(res.getBody("utf8"));
         if (packet !== null) {
-            prepare(packet, `未能撤回消息<${id}>，可能的原因：\n权限不足.`).send();
+            // prepare(packet, `未能撤回消息<${id}>，可能的原因：\n权限不足.`).send();
         }
         log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [消息撤回失败", "WARNING");
         return false;
@@ -227,21 +224,17 @@ function kick(gid, uid) {
 }
 
 function getGroupMemberInfo(gid, uid) {
-    var data = {};
-    data.group_id = gid;
-    data.user_id = uid;
-    data.no_cache = true;
-    var url = `http://${API_HOST}:${API_HTTP_PORT}/get_group_member_info?access_token=${ACCESS_TOKEN}`;
-    var res = request("POST", url, {
-        json: data
-    });
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/get_group_member_info?access_token=${ACCESS_TOKEN}&group_id=${gid}&user_id=${uid}&no_cache=true`;
+    var res = request("GET", url);
     try {
         var response = JSON.parse(res.getBody("utf8"));
     } catch (e) {
         console.log(res.getBody("utf8"));
         log.write("无法解析服务器返回的数据.", "MESSAGE API] [获取群成员信息失败", "WARNING");
         log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [获取群成员信息失败", "WARNING");
-        return false;
+        return {
+            nickname: '[获取失败]'
+        };
     }
     if (response.retcode == 0) {
         log.write(`成功获取群成员信息`, "MESSAGE API", "INFO");
@@ -249,7 +242,9 @@ function getGroupMemberInfo(gid, uid) {
     } else {
         console.log(res.getBody("utf8"));
         log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [获取群成员信息失败", "WARNING");
-        return false;
+        return {
+            nickname: '[获取失败]'
+        };
     }
 }
 
@@ -309,19 +304,17 @@ function getGroupInfoAsync(gid, callback) {
 }
 
 function userinfo(uid) {
-    var data = {};
-    data.user_id = uid;
-    var url = `http://${API_HOST}:${API_HTTP_PORT}/get_stranger_info?access_token=${ACCESS_TOKEN}`;
-    var res = request("POST", url, {
-        json: data
-    });
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/get_stranger_info?access_token=${ACCESS_TOKEN}&user_id=${uid}`;
+    var res = request("GET", url);
     try {
         var response = JSON.parse(res.getBody("utf8"));
     } catch (e) {
         console.log(res.getBody("utf8"));
         log.write("无法解析服务器返回的数据.", "MESSAGE API] [获取陌生人信息失败", "WARNING");
         log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [获取陌生人信息失败", "WARNING");
-        return false;
+        return {
+            nickname: '[获取失败]'
+        };
     }
     if (response.retcode == 0) {
         log.write(`目标用户: <${uid}>`, "MESSAGE API] [成功获取陌生人信息", "INFO");
@@ -329,19 +322,21 @@ function userinfo(uid) {
     } else {
         console.log(res.getBody("utf8"));
         log.write(`Ret:<${response.retcode}>`, "MESSAGE API] [获取陌生人信息失败", "WARNING");
-        return false;
+        return {
+            nickname: '[获取失败]'
+        };
     }
 }
 
 function getGroupList(callback) {
     var url = `http://${API_HOST}:${API_HTTP_PORT}/get_group_list?access_token=${ACCESS_TOKEN}`;
-    async_request.post({
+    async_request.get({
         'url': url
     }, function (_e, _r, body) {
         try {
             body = JSON.parse(body);
         } catch (e) {
-            console.log(body);
+            console.log(e);
             log.write("无法解析服务器返回的数据.", "MESSAGE API] [获取群列表失败", "WARNING");
             log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [获取群列表失败", "WARNING");
             return false;
@@ -424,17 +419,21 @@ function mute(gid, uid, time) {
 }
 
 function getGroupMemberList(gid, callback) {
-    var url = `http://${API_HOST}:${API_HTTP_PORT}/get_group_member_list?access_token=${ACCESS_TOKEN}`;
-    var postdata = {
-        group_id: gid
-    };
-    async_request.post({
+    var url = `http://${API_HOST}:${API_HTTP_PORT}/get_group_member_list?access_token=${ACCESS_TOKEN}&group_id=${gid}`;
+    async_request.get({
         'url': url,
-        json: postdata
     }, function (e, _r, body) {
         if (e) {
             console.log(e)
             getGroupMemberList(gid, callback);
+            return false;
+        }
+        try {
+            body = JSON.parse(body);
+        } catch (e) {
+            console.log(e);
+            log.write("无法解析服务器返回的数据.", "MESSAGE API] [获取群成员列表失败", "WARNING");
+            log.write("请检查后端服务器是否工作正常.", "MESSAGE API] [获取群成员列表失败", "WARNING");
             return false;
         }
         if (body.retcode == 0) {

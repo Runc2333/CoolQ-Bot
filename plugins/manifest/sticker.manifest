@@ -1,0 +1,36 @@
+{
+	"pluginName": "sticker",
+	"pluginAlias": "表情包生成",
+	"script": "sticker.js",
+	"description": "快速生成客制化的表情包",
+	"author": "Runc2333",
+	"defaultState": "enable",
+	"switchable": true,
+	"globalConfigurations": false,
+	"groupSensitive": false,
+	"webConsole": false,
+	"superCommand": [{
+			"command": "qnmd",
+			"handler": "qnmd",
+			"arguments": [{
+				"name": "目标用户",
+				"required": true
+			},{
+				"name": "昵称",
+				"required": false
+			}],
+			"permission": 0,
+			"description": "以目标用户为模板生成“去你妈的”表情包。\n使用示例：#qnmd_1145141919"
+		},
+        {
+			"command": "wdnmd",
+			"handler": "wdnmd",
+			"arguments": [{
+				"name": "目标用户",
+				"required": true
+			}],
+			"permission": 0,
+			"description": "以目标用户为模板生成“去你妈的”GIF。\n使用示例：#wdnmd_1145141919"
+		}
+	]
+}
