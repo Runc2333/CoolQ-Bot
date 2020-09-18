@@ -31,6 +31,37 @@
 			}],
 			"permission": 0,
 			"description": "以目标用户为模板生成“去你妈的”GIF。\n使用示例：#wdnmd_1145141919"
+		},
+        {
+			"command": "ddw",
+			"handler": "ddw",
+			"arguments": [{
+				"name": "语句01",
+				"required": true
+			},{
+				"name": "语句02",
+				"required": true
+			},{
+				"name": "语句03",
+				"required": true
+			},{
+				"name": "语句04",
+				"required": true
+			},{
+				"name": "语句05",
+				"required": true
+			},{
+				"name": "语句06",
+				"required": true
+			},{
+				"name": "语句07",
+				"required": true
+			},{
+				"name": "语句08",
+				"required": true
+			}],
+			"permission": 0,
+			"description": "以指定语句为模板生成“等等我”GIF。\n使用示例：#ddw_阿！小姐姐！小姐姐！_小姐姐等等我！！_我可喜欢你了！！_你可真他妈可爱！！_老子爱你！！！_快来吧小姐姐！_来来来！！_小姐姐不要跑阿！"
 		}
 	]
 }

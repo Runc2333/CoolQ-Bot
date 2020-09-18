@@ -1,0 +1,23 @@
+{
+	"pluginName": "sayings",
+	"pluginAlias": "爱人语录",
+	"script": "sayings.js",
+	"description": "爱人语录",
+	"author": "Runc2333",
+	"defaultState": "enable",
+	"switchable": true,
+	"globalConfigurations": false,
+	"groupSensitive": false,
+	"webConsole": false,
+	"message": [{
+		"type": [
+			"GROUP_MESSAGE", "PRIVATE_MESSAGE", "DISCUSS_MESSAGE"
+		],
+		"mode": "regexp",
+        "regexp": "^爱人曰|^爱人语录$|^爱人言",
+		"handler": "sayings",
+		"priority": 0,
+		"skipable": true,
+		"silent": false
+	}]
+}

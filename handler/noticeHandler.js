@@ -8,18 +8,7 @@ const message = require(`${processPath}/utils/messageApi.js`);//消息接口
 const cqcode = require(`${processPath}/utils/CQCode.js`);//CQ码编解码器
 
 // 连接远程数据库
-const sqldb = mysql.createConnection({
-    host: config.sys("MYSQL_HOST"),
-    user: config.sys("MYSQL_USERNAME"),
-    password: config.sys("MYSQL_PASSWORD"),
-    database: config.sys("MYSQL_DATABASE"),
-});
-try {
-    sqldb.connect();
-} catch (e) {
-    log.write(`无法连接到远程数据库，正在退出进程...`, "插件开关", "ERROR");
-    process.exit();
-}
+const sqldb = config.getDatabase();
 
 function handle(packet) {
     switch (packet.notice_type) {

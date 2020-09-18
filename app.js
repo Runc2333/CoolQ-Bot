@@ -7,6 +7,7 @@ const request = require("sync-request");//同步网络请求
 const { CQWebSocket } = require("cq-websocket");//CoolQ-WebSocket
 const Database = require("better-sqlite3"); // SQLite3驱动程序
 const mysql = require("mysql"); // mysql
+const { resolve } = require("dns");
 const log = require(`${processPath}/utils/logger.js`);//日志
 const config = require(`${processPath}/utils/configApi.js`);//设置
 const message = require(`${processPath}/utils/messageApi.js`);//消息接口
@@ -98,7 +99,7 @@ bot.on("message", (_CQEvent, packet) => {
                 break;
         }
     }
-    if (packet.message_type != 'group' || (packet.group_id != '930458423' && packet.group_id != '1148034361')) {
+    if (packet.message_type == 'group' && (packet.group_id != '930458423' && packet.group_id != '1148034361' && packet.group_id != '931475116' && packet.group_id != '661858229')) {
         return false;
     }
     messageHandler.handle(packet);
@@ -109,7 +110,7 @@ bot.on("notice", (packet) => {
     if (packet.user_id == BOT_QQNUM || packet.user_id == "2854196310" || packet.user_id == "2854196320" || packet.user_id == "2854196306" || packet.user_id == "2854196312" || packet.user_id == "2854196314" || packet.user_id == "2854196324" || packet.user_id == "1648312960" || packet.user_id == "1022941833" || packet.user_id == "809154538") {
         return false;
     }
-    if (packet.group_id != '930458423' && packet.group_id != '1148034361') {
+    if (packet.group_id != '930458423' && packet.group_id != '1148034361' && packet.group_id != '931475116' && packet.group_id != '661858229') {
         return false;
     }
     noticeHandler.handle(packet);
@@ -117,9 +118,6 @@ bot.on("notice", (packet) => {
 
 //收到请求
 bot.on("request", (packet) => {
-    if (packet.request_type != 'group' || (packet.group_id != '930458423' && packet.group_id != '1148034361')) {
-        return false;
-    }
     requestHandler.handle(packet);
 });
 
@@ -164,154 +162,141 @@ log.write("用户插件载入完毕.", "MAIN THREAD", "INFO");
 log.write("正在刷新插件启用表...", "MAIN THREAD", "INFO");
 config.generateSwitchTable();
 
-// // 上报群列表
-// var groupTableProgress = 0;
-// var groupTableTotal = 0;
-// function generateGroupTable() {
-//     log.write("正在上报群列表...", "MAIN THREAD", "INFO");
-//     sqldb.query(`SELECT count(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='${config.sys('MYSQL_DATABASE')}' and TABLE_NAME ='GROUP_LIST';`, (e, r, f) => {
-//         if (r[0]["count(*)"] === 0) {
-//             var sql = 'CREATE TABLE IF NOT EXISTS `GROUP_LIST` (`ID` int(255) NOT NULL AUTO_INCREMENT, `groupId` varchar(190) NOT NULL, `groupName` TEXT NOT NULL,PRIMARY KEY(`ID`)) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;';
-//             sqldb.query(sql, () => {
-//                 var sql = 'CREATE UNIQUE INDEX major ON `GROUP_LIST`(`groupId`);';
-//                 sqldb.query(sql, () => {
-//                     generateGroupTable();
-//                 });
-//             });
-//         } else {
-//             message.getGroupList((a) => {
-//                 groupTableTotal = a.length;
-//                 a.forEach((item) => {
-//                     var sql = 'INSERT INTO `GROUP_LIST` (`groupId`, `groupName`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `groupId` = ?, `groupName` = ?;';
-//                     sqldb.query(sql, [
-//                         item.group_id,
-//                         item.group_name,
-//                         item.group_id,
-//                         item.group_name,
-//                     ], (e) => {
-//                         groupTableProgress++;
-//                         // console.log(e);
-//                     });
-//                 });
-//             });
-//         }
-//     });
-// }
+// 上报群列表
+function generateGroupTable() {
+    return new Promise((resolve, reject) => {
+        log.write("正在上报群列表...", "MAIN THREAD", "INFO");
+        sqldb.query(`SELECT count(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='${config.sys('MYSQL_DATABASE')}' and TABLE_NAME ='GROUP_LIST';`, (e, r, f) => {
+            if (r[0]["count(*)"] === 0) {
+                var sql = 'CREATE TABLE IF NOT EXISTS `GROUP_LIST` (`ID` int(255) NOT NULL AUTO_INCREMENT, `groupId` varchar(190) NOT NULL, `groupName` TEXT NOT NULL,PRIMARY KEY(`ID`)) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;';
+                sqldb.query(sql, () => {
+                    var sql = 'CREATE UNIQUE INDEX major ON `GROUP_LIST`(`groupId`);';
+                    sqldb.query(sql, () => {
+                        message.getGroupList((a) => {
+                            groupTableTotal = a.length;
+                            a.forEach((item) => {
+                                var sql = 'INSERT INTO `GROUP_LIST` (`groupId`, `groupName`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `groupId` = ?, `groupName` = ?;';
+                                sqldb.query(sql, [
+                                    item.group_id,
+                                    item.group_name,
+                                    item.group_id,
+                                    item.group_name,
+                                ]);
+                            });
+                            resolve();
+                        });
+                    });
+                });
+            } else {
+                message.getGroupList((a) => {
+                    groupTableTotal = a.length;
+                    a.forEach((item) => {
+                        var sql = 'INSERT INTO `GROUP_LIST` (`groupId`, `groupName`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `groupId` = ?, `groupName` = ?;';
+                        sqldb.query(sql, [
+                            item.group_id,
+                            item.group_name,
+                            item.group_id,
+                            item.group_name,
+                        ]);
+                    });
+                    resolve();
+                });
+            }
+        });
+    });
+}
 
-// // 获取群成员列表
-// var groupFetchTotal = 0;
-// var groupFetchProgress = 0;
-// var userList = [];
-// function fetchGroupMemberList() {
-//     log.write("正在抓取群成员列表...", "MAIN THREAD", "INFO");
-//     sqldb.query(`SELECT count(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='${config.sys('MYSQL_DATABASE')}' and TABLE_NAME ='GROUP_MEMBERS';`, (e, r, f) => {
-//         if (r[0]["count(*)"] === 0) {
-//             var sql = 'CREATE TABLE IF NOT EXISTS `GROUP_MEMBERS` (`ID` int(255) NOT NULL AUTO_INCREMENT, `groupId` varchar(190) NOT NULL, `userId` varchar(190) NOT NULL, `groupName` TEXT NOT NULL, `nickname` TEXT NOT NULL, `card` TEXT NOT NULL, `joinTime` TEXT NOT NULL, `lastSentTime` TEXT NOT NULL, `role` TEXT NOT NULL,PRIMARY KEY(`ID`)) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;';
-//             sqldb.query(sql, () => {
-//                 var sql = 'CREATE UNIQUE INDEX major ON `GROUP_MEMBERS`(`groupId`, `userId`);';
-//                 sqldb.query(sql, () => {
-//                     var sql = 'CREATE INDEX userid ON `GROUP_MEMBERS`(`userId`);';
-//                     sqldb.query(sql, () => {
-//                         fetchGroupMemberList();
-//                     });
-//                 });
-//             });
-//         } else {
-//             message.getGroupList((a) => {
-//                 groupFetchTotal = a.length;
-//                 a.forEach((item) => {
-//                     message.getGroupMemberList(item.group_id, (list) => {
-//                         list.forEach((user) => {
-//                             user.group_name = item.group_name;
-//                             userList.push(user);
-//                         });
-//                         groupFetchProgress++;
-//                     });
-//                 });
-//             });
-//         }
-//     });
-// }
+// 获取群成员列表
+function fetchGroupMemberList() {
+    return new Promise((resolve, reject) => {
+        log.write("正在抓取群成员列表...", "MAIN THREAD", "INFO");
+        sqldb.query(`SELECT count(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='${config.sys('MYSQL_DATABASE')}' and TABLE_NAME ='GROUP_MEMBERS';`, (e, r, f) => {
+            if (r[0]["count(*)"] === 0) {
+                var sql = 'CREATE TABLE IF NOT EXISTS `GROUP_MEMBERS` (`ID` int(255) NOT NULL AUTO_INCREMENT, `groupId` varchar(190) NOT NULL, `userId` varchar(190) NOT NULL, `groupName` TEXT NOT NULL, `nickname` TEXT NOT NULL, `card` TEXT NOT NULL, `joinTime` TEXT NOT NULL, `lastSentTime` TEXT NOT NULL, `role` TEXT NOT NULL,PRIMARY KEY(`ID`)) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;';
+                sqldb.query(sql, () => {
+                    var sql = 'CREATE UNIQUE INDEX major ON `GROUP_MEMBERS`(`groupId`, `userId`);';
+                    sqldb.query(sql, () => {
+                        var sql = 'CREATE INDEX userid ON `GROUP_MEMBERS`(`userId`);';
+                        sqldb.query(sql, () => {
+                            var userList = [];
+                            message.getGroupList((a) => {
+                                groupFetchTotal = a.length;
+                                a.forEach((item) => {
+                                    message.getGroupMemberList(item.group_id, (list) => {
+                                        list.forEach((user) => {
+                                            user.group_name = item.group_name;
+                                            userList.push(user);
+                                        });
+                                    });
+                                });
+                                resolve(userList);
+                            });
+                        });
+                    });
+                });
+            } else {
+                var userList = [];
+                message.getGroupList((a) => {
+                    groupFetchTotal = a.length;
+                    a.forEach((item) => {
+                        message.getGroupMemberList(item.group_id, (list) => {
+                            list.forEach((user) => {
+                                user.group_name = item.group_name;
+                                userList.push(user);
+                            });
+                        });
+                    });
+                    resolve(userList);
+                });
+            }
+        });
+    });
+}
 
-// // 上报群成员列表
-// var groupMemberTotal = 0;
-// var groupMemberProgress = 0;
-// function reportGroupMemberList(list) {
-//     log.write("正在上报群成员列表...", "MAIN THREAD", "INFO");
-//     groupMemberTotal = list.length;
-//     list.forEach((user) => {
-//         var sql = 'INSERT INTO `GROUP_MEMBERS` (`groupId`, `userId`, `groupName`, `nickname`, `card`, `joinTime`, `lastSentTime`, `role`) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `groupId` = ?, `userId` = ?, `groupName` = ?, `nickname` = ?, `card` = ?, `joinTime` = ?, `lastSentTime` = ?, `role` = ?;';
-//         sqldb.query(sql, [
-//             user.group_id,
-//             user.user_id,
-//             user.group_name,
-//             user.nickname,
-//             user.card,
-//             user.join_time,
-//             user.last_sent_time,
-//             user.role,
-//             user.group_id,
-//             user.user_id,
-//             user.group_name,
-//             user.nickname,
-//             user.card,
-//             user.join_time,
-//             user.last_sent_time,
-//             user.role,
-//         ], (e) => {
-//             groupMemberProgress++;
-//             // console.log(e);
-//             // return;
-//         });
-//     });
-// }
+// 上报群成员列表
+async function reportGroupMemberList(list) {
+    log.write("正在上报群成员列表...", "MAIN THREAD", "INFO");
+    groupMemberTotal = list.length;
+    list.forEach((user) => {
+        var sql = 'INSERT INTO `GROUP_MEMBERS` (`groupId`, `userId`, `groupName`, `nickname`, `card`, `joinTime`, `lastSentTime`, `role`) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `groupId` = ?, `userId` = ?, `groupName` = ?, `nickname` = ?, `card` = ?, `joinTime` = ?, `lastSentTime` = ?, `role` = ?;';
+        sqldb.query(sql, [
+            user.group_id,
+            user.user_id,
+            user.group_name,
+            user.nickname,
+            user.card,
+            user.join_time,
+            user.last_sent_time,
+            user.role,
+            user.group_id,
+            user.user_id,
+            user.group_name,
+            user.nickname,
+            user.card,
+            user.join_time,
+            user.last_sent_time,
+            user.role,
+        ]);
+    });
+}
 
-// // 上报主程序
-// var progressInterval = 0;
-// function report() {
-//     generateGroupTable();
-//     progressInterval = setInterval(function () {
-//         if (groupTableProgress === groupTableTotal) {
-//             log.write(`群列表上报完毕. [${groupTableProgress} / ${groupTableTotal}]`, "MAIN THREAD", "INFO");
-//             clearInterval(progressInterval);
-//             fetchGroupMemberList();
-//             progressInterval = setInterval(function () {
-//                 if (groupFetchProgress === groupFetchTotal) {
-//                     log.write(`群成员列表抓取完毕. [${groupFetchProgress} / ${groupFetchTotal}]`, "MAIN THREAD", "INFO");
-//                     clearInterval(progressInterval);
-//                     reportGroupMemberList(userList);
-//                     progressInterval = setInterval(function () {
-//                         if (groupMemberProgress === groupMemberTotal) {
-//                             log.write(`群成员列表上报完毕. [${groupMemberProgress} / ${groupMemberTotal}]`, "MAIN THREAD", "INFO");
-//                             clearInterval(progressInterval);
-//                             groupTableProgress = 0;
-//                             groupTableTotal = 0;
-//                             groupFetchProgress = 0;
-//                             groupFetchTotal = 0;
-//                             groupMemberProgress = 0;
-//                             groupMemberTotal = 0;
-//                             userList = [];
-//                             log.write("上报进程已经执行完毕，数据将会每90分钟刷新一次.", "MAIN THREAD", "INFO");
-//                         } else {
-//                             log.write(`当前正在上报群成员列表... [${groupMemberProgress} / ${groupMemberTotal}]`, "MAIN THREAD", "INFO");
-//                         }
-//                     }, 2000);
-//                 } else {
-//                     log.write(`当前正在抓取群成员列表... [${groupFetchProgress} / ${groupFetchTotal}]`, "MAIN THREAD", "INFO");
-//                 }
-//             }, 2000);
-//         } else {
-//             log.write(`当前正在上报群列表... [${groupTableProgress} / ${groupTableTotal}]`, "MAIN THREAD", "INFO");
-//         }
-//     }, 2000);
-// }
-// report();
-// log.write("上报进程正在后台执行，上报未完成前，机器人性能可能受到影响.", "MAIN THREAD", "INFO");
+// 上报主程序
+function report() {
+    generateGroupTable().then(() => {
+        fetchGroupMemberList().then((list) => {
+            reportGroupMemberList(list).then(() => {
+                log.write("上报进程已经执行完毕，数据将会每90分钟刷新一次.", "MAIN THREAD", "INFO");
+            });
+        });
+    });
+}
+report();
+log.write("上报进程正在后台执行，上报未完成前，机器人性能可能受到影响.", "MAIN THREAD", "INFO");
 
-// // 定时刷新上报数据 90分钟
-// setInterval(() => {
-//     report();
-// }, 90 * 60 * 1000);
+// 定时刷新上报数据 90分钟
+setInterval(() => {
+    report();
+}, 90 * 60 * 1000);
 
 // // 上报消息处理量
 // const gdb = db.getDatabase("group_messages");

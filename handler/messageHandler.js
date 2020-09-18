@@ -44,7 +44,6 @@ function handle(packet, systemToken) {
         if (skipSignalReceived && v.skipable === true) {
             return false;
         }
-        // console.log(`${v.plugin}: ${config.isEnable(packet, v.plugin)}`);
         if ((new RegExp(v.regexp)).test(packet.message) && config.isEnable(packet, v.plugin)) {
             if (!v.silent) {
                 log.write(`重定向到[${v.alias}]处理`, "MessageHandler", "INFO");

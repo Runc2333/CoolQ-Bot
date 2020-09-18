@@ -8,18 +8,7 @@ const { identity } = require("lodash");
 const log = require(`${processPath}/utils/logger.js`);//日志
 const message = require(`${processPath}/utils/messageApi.js`);//消息接口
 
-const db = mysql.createConnection({
-    host: config.sys("MYSQL_HOST"),
-    user: config.sys("MYSQL_USERNAME"),
-    password: config.sys("MYSQL_PASSWORD"),
-    database: config.sys("MYSQL_DATABASE"),
-});
-try {
-    db.connect();
-} catch (e) {
-    log.write(`无法连接到远程数据库，正在退出进程...`, "插件开关", "ERROR");
-    process.exit();
-}
+const db = config.getDatabase();
 
 var token = null;
 function init(t) {

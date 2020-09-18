@@ -93,6 +93,13 @@ function read({ mode, token, table, callback, condition = null, nocache = false 
         return;
     }
     db.query(`SELECT count(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='${configFileObject.MYSQL_DATABASE}' and TABLE_NAME ='${plugin.plugin}-${table}';`, (e, r, f) => {
+        if (e) {
+            handleMySQLError(e);
+            callback({
+                code: 1,
+                msg: `数据库发生错误，请联系管理员排查故障.\n调试信息:\n${e}`,
+            });
+        }
         if (r[0]["count(*)"] === 0) {
             callback({
                 code: 1,
@@ -105,6 +112,13 @@ function read({ mode, token, table, callback, condition = null, nocache = false 
                 case "standard":
                     if (condition === null) {
                         db.query(`SELECT * FROM \`${plugin.plugin}-${table}\`;`, (e, r, f) => {
+                            if (e) {
+                                handleMySQLError(e);
+                                callback({
+                                    code: 1,
+                                    msg: `数据库发生错误，请联系管理员排查故障.\n调试信息:\n${e}`,
+                                });
+                            }
                             callback({
                                 code: 0,
                                 msg: `OK`,
@@ -114,6 +128,13 @@ function read({ mode, token, table, callback, condition = null, nocache = false 
                         });
                     } else {
                         db.query(`SELECT * FROM \`${plugin.plugin}-${table}\` WHERE \`groupId\` = '${condition.group_id}';`, (e, r, f) => {
+                            if (e) {
+                                handleMySQLError(e);
+                                callback({
+                                    code: 1,
+                                    msg: `数据库发生错误，请联系管理员排查故障.\n调试信息:\n${e}`,
+                                });
+                            }
                             callback({
                                 code: 0,
                                 msg: `OK`,
@@ -126,6 +147,13 @@ function read({ mode, token, table, callback, condition = null, nocache = false 
                 case "advanced":
                     if (condition === null) {
                         db.query(`SELECT * FROM \`${plugin.plugin}-${table}\`;`, (e, r, f) => {
+                            if (e) {
+                                handleMySQLError(e);
+                                callback({
+                                    code: 1,
+                                    msg: `数据库发生错误，请联系管理员排查故障.\n调试信息:\n${e}`,
+                                });
+                            }
                             callback({
                                 code: 0,
                                 msg: `OK`,
@@ -141,6 +169,13 @@ function read({ mode, token, table, callback, condition = null, nocache = false 
                         });
                         sql += sqlCondition.join(" AND ");
                         db.query(sql, (e, r, f) => {
+                            if (e) {
+                                handleMySQLError(e);
+                                callback({
+                                    code: 1,
+                                    msg: `数据库发生错误，请联系管理员排查故障.\n调试信息:\n${e}`,
+                                });
+                            }
                             callback({
                                 code: 0,
                                 msg: `OK`,
@@ -168,6 +203,14 @@ function write({ token, table, data, callback, packet = null } = {}) {
         configFileObject.MYSQL_DATABASE,
         `${plugin.plugin}-${table}`,
     ], (e, r, f) => {
+        if (e) {
+            handleMySQLError(e);
+            callback({
+                code: 1,
+                msg: `数据库发生错误，请联系管理员排查故障.\n调试信息:\n${e}`,
+            });
+            log.write(e, 'CONFIG API', 'ERROR');
+        }
         if (r[0]["count(*)"] === 0) {
             callback({
                 code: 1,
@@ -176,6 +219,13 @@ function write({ token, table, data, callback, packet = null } = {}) {
             return;
         } else {
             db.query(`DESC \`${plugin.plugin}-${table}\`;`, (e, r, f) => {
+                if (e) {
+                    handleMySQLError(e);
+                    callback({
+                        code: 1,
+                        msg: `数据库发生错误，请联系管理员排查故障.\n调试信息:\n${e}`,
+                    });
+                }
                 var dataToInsert = {};
                 r.forEach((v) => {
                     if (typeof (data[v.Field]) !== "undefined") {
@@ -392,7 +442,7 @@ function registerPlugin(manifest) {
             });
             item.type.forEach((type) => {
                 if (/GROUP_MESSAGE|PRIVATE_MESSAGE|DISCUSS_MESSAGE/.test(type)) {
-                    if (item.mode === "all") {
+                    if (item.mode === "all") { // 处理所有消息
                         var configToPush = {
                             "script": `${processPath}/plugins/script/${manifest.script}`,
                             "plugin": manifest.pluginName,
@@ -406,7 +456,7 @@ function registerPlugin(manifest) {
                         if (item.identifier) {
                             configToPush.identifier = item.identifier;
                         }
-                    } else if (item.mode === "cue") {
+                    } else if (item.mode === "cue") { // 处理@机器人的消息
                         var configToPush = {
                             "script": `${processPath}/plugins/script/${manifest.script}`,
                             "plugin": manifest.pluginName,
@@ -420,7 +470,7 @@ function registerPlugin(manifest) {
                         if (item.identifier) {
                             configToPush.identifier = item.identifier;
                         }
-                    } else if (item.mode === "mention") {
+                    } else if (item.mode === "mention") { // 处理提到了机器人的消息
                         var configToPush = {
                             "script": `${processPath}/plugins/script/${manifest.script}`,
                             "plugin": manifest.pluginName,
@@ -434,7 +484,7 @@ function registerPlugin(manifest) {
                         if (item.identifier) {
                             configToPush.identifier = item.identifier;
                         }
-                    } else if (item.mode === "regexp") {
+                    } else if (item.mode === "regexp") { // 处理匹配目标正则表达式的消息
                         if (typeof (item["regexp"]) === "undefined") {
                             return {
                                 status: false,
