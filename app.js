@@ -62,9 +62,6 @@ bot.on("ready", function () {
 
 //收到消息
 bot.on("message", (_CQEvent, packet) => {
-    if (packet.sender.user_id == BOT_QQNUM || packet.sender.user_id == "2854196310" || packet.sender.user_id == "2854196320" || packet.sender.user_id == "2854196306" || packet.sender.user_id == "2854196312" || packet.sender.user_id == "2854196314" || packet.sender.user_id == "2854196324" || packet.sender.user_id == "1648312960" || packet.user_id == "1022941833" || packet.user_id == "809154538") {
-        return false;
-    }
     if (/^#/.test(cqcode.decode(packet.message).pureText) === false) {
         switch (packet.message_type) {
             case "group":
@@ -99,20 +96,11 @@ bot.on("message", (_CQEvent, packet) => {
                 break;
         }
     }
-    if (packet.message_type == 'group' && (packet.group_id != '930458423' && packet.group_id != '1148034361' && packet.group_id != '931475116' && packet.group_id != '661858229')) {
-        return false;
-    }
     messageHandler.handle(packet);
 });
 
 //收到通知
 bot.on("notice", (packet) => {
-    if (packet.user_id == BOT_QQNUM || packet.user_id == "2854196310" || packet.user_id == "2854196320" || packet.user_id == "2854196306" || packet.user_id == "2854196312" || packet.user_id == "2854196314" || packet.user_id == "2854196324" || packet.user_id == "1648312960" || packet.user_id == "1022941833" || packet.user_id == "809154538") {
-        return false;
-    }
-    if (packet.group_id != '930458423' && packet.group_id != '1148034361' && packet.group_id != '931475116' && packet.group_id != '661858229') {
-        return false;
-    }
     noticeHandler.handle(packet);
 });
 
@@ -152,7 +140,12 @@ pluginManifests.forEach((currentManifestName) => {
     log.write(`已成功解析[${currentManifestName}]，正在注册插件...`, "MAIN THREAD", "INFO");
     var registerInformation = config.registerPlugin(currentManifestObject);
     if (registerInformation.status) {
-        require(registerInformation.path).init(registerInformation.token);
+        try{
+            require(registerInformation.path).init(registerInformation.token);
+        }catch(err){
+            log.write(`插件[${currentManifestName.split(".")[0]}]注册失败，原因是: 插件内部错误或依赖错误.`, "MAIN THREAD", "ERROR");
+            log.write(err.stack, "MAIN THREAD", "ERROR")
+        }
         log.write(`插件[${registerInformation.plugin}]注册成功.`, "MAIN THREAD", "INFO");
     } else {
         log.write(`插件[${currentManifestName.split(".")[0]}]注册失败，原因是:${registerInformation.reason}.`, "MAIN THREAD", "ERROR");
