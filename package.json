@@ -19,7 +19,7 @@
     "node-pinyin": "^0.2.3",
     "pinyin": "^2.9.1",
     "request": "^2.88.2",
-    "sharp": "^0.25.3",
+    "sharp": "^0.30.5",
     "svg-captcha": "^1.4.0",
     "sync-request": "^6.1.0",
     "text-to-svg": "^3.1.5"
