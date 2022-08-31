@@ -14,7 +14,7 @@
     "gm": "^1.23.1",
     "lodash": "^4.17.19",
     "mime-types": "^2.1.26",
-    "moment-timezone": "^0.5.31",
+    "moment-timezone": "^0.5.35",
     "mysql": "^2.18.1",
     "node-pinyin": "^0.2.3",
     "pinyin": "^2.9.1",
